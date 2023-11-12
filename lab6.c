@@ -14,6 +14,7 @@ int main(){
 
         syntax->d_end_of_something = assign_syntax(syntax, "\n");
         syntax->d_must_have_too = assign_syntax(syntax, " ");
+        syntax->d_ignore = assign_syntax(syntax, " ");
         syntax->d_atribution = assign_syntax(syntax, "=");
 
         syntax->d_begin_of_program = assign_syntax(syntax, "begin");
@@ -22,8 +23,12 @@ int main(){
 
         syntax->d_while_begin = assign_syntax(syntax, "while");
         syntax->d_while_start = assign_syntax(syntax, "do");
-        syntax->d_repeat_begin = assign_syntax(syntax, "repeat");
-        syntax->d_repeat_end = assign_syntax(syntax, "until");
+        //syntax->d_repeat_begin = assign_syntax(syntax, "repeat");
+        //syntax->d_repeat_end = assign_syntax(syntax, "until");
+
+        syntax->d_if = assign_syntax(syntax, "if");
+        syntax->d_else = assign_syntax(syntax, "else");
+
 
         syntax->d_print = assign_syntax(syntax, "print");
 
@@ -31,7 +36,11 @@ int main(){
     char *cod = (char *)malloc(sizeof(char));
     size_t cod_size = read_cod_in(cod, syntax);
 
+            Token *token = malloc(sizeof(Token));
+            if (token == NULL) return 1;
 
+
+        if (cod_size <0){destroy_everything(token, syntax); return 1;}
 
 
 
