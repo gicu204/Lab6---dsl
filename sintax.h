@@ -25,6 +25,8 @@ typedef struct
     char *d_if;
     char *d_else;
 
+    char *d_trunc;
+
     char *d_print;
 
 }Syntax;
