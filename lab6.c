@@ -29,30 +29,65 @@ int main(){
         syntax->d_if = assign_syntax(syntax, "if");
         syntax->d_else = assign_syntax(syntax, "else");
 
+        syntax->d_trunc = assign_syntax(syntax, "trunc");
 
         syntax->d_print = assign_syntax(syntax, "print");
 
+    char *cod = read_cod_in(syntax);
+    if (cod == NULL){free(cod);}
 
-    char *cod = (char *)malloc(sizeof(char));
-    size_t cod_size = read_cod_in(cod, syntax);
-
-            Token *token = malloc(sizeof(Token));
-            if (token == NULL) return 1;
-
-
-        if (cod_size <0){destroy_everything(token, syntax); return 1;}
+    size_t cod_size = strlen(cod);
+    int tokens = count_tokens(cod, cod_size);
 
 
+    //printf("\nresult = %s",cod);
+
+    //printf("\nsize = %d\n",tokens);
 
 
+    Token *token = tokenization(cod, syntax, cod_size, tokens);
+    if (token == NULL){destroy_everything(token, syntax, cod); return 2;}
+
+    print_all_tokens(token);
+
+     token->number[2].content = "4";
+    token->number[2].type = "value_int";
+     token->number[3].content = "+";
+    token->number[3].type = "+";
+     token->number[4].content = "8";
+    token->number[4].type = "value_int";
+     token->number[5].content = "*";
+    token->number[5].type = "*";
+     token->number[6].content = "5";
+    token->number[6].type = "value_int";
+     token->number[7].content = "%";
+    token->number[7].type = "%";
+     token->number[8].content = "2";
+    token->number[8].type = "value_int";
+     token->number[9].content = "-";
+    token->number[9].type = "-";
+     token->number[10].content = "5";
+    token->number[10].type = "value_int";
+     token->number[11].content = "*";
+    token->number[11].type = "*";
+     token->number[12].content = "(";
+    token->number[12].type = "(";
+     token->number[13].content = "7";
+    token->number[13].type = "value_int";
+     token->number[14].content = "+";
+    token->number[14].type = "+";
+     token->number[15].content = "1";
+    token->number[15].type = "value_int";
+     token->number[16].content = ")";
+    token->number[16].type = ")";
+
+    int dd = 5 % 2;
+    int dddd = 4 + 8 * dd - 5 * ( 7 + 1 );
+    printf("\nvalue = %d , and = %d", calculate_int_expresion(token, syntax, 2, 16), dddd);
 
 
-
-
-
-
-
-
+//2-15
+    destroy_everything(token, syntax, cod);
 return 0;
 }
 
