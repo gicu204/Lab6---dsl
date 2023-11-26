@@ -8,7 +8,7 @@ int main(){
 
         syntax->d_integer = assign_syntax(syntax, "int");
         syntax->d_float = assign_syntax(syntax, "float");
-        syntax->d_bool = assign_syntax(syntax, "bool");
+        //syntax->d_bool = assign_syntax(syntax, "bool");
         syntax->d_char = assign_syntax(syntax, "char");
         syntax->d_string = assign_syntax(syntax, "string");
 
@@ -23,13 +23,17 @@ int main(){
 
         syntax->d_while_begin = assign_syntax(syntax, "while");
         syntax->d_while_start = assign_syntax(syntax, "do");
+        syntax->d_break = assign_syntax(syntax, "break");
+
         //syntax->d_repeat_begin = assign_syntax(syntax, "repeat");
         //syntax->d_repeat_end = assign_syntax(syntax, "until");
 
         syntax->d_if = assign_syntax(syntax, "if");
+        syntax->d_then = assign_syntax(syntax, "then");
         syntax->d_else = assign_syntax(syntax, "else");
 
         syntax->d_trunc = assign_syntax(syntax, "trunc");
+        syntax->d_power = assign_syntax(syntax, "pow");
 
         syntax->d_print = assign_syntax(syntax, "print");
 
