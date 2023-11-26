@@ -19,13 +19,16 @@ typedef struct
 
     char *d_while_begin;
     char *d_while_start;
+    char *d_break;
     //char *d_repeat_begin;
     //char *d_repeat_end;
 
     char *d_if;
     char *d_else;
+    char *d_then;
 
     char *d_trunc;
+    char *d_power;
 
     char *d_print;
 
