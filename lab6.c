@@ -23,7 +23,7 @@ int main(){
 
         syntax->d_while_begin = assign_syntax(syntax, "while");
         syntax->d_while_start = assign_syntax(syntax, "do");
-        syntax->d_break = assign_syntax(syntax, "break");
+        //syntax->d_break = assign_syntax(syntax, "break");
 
         //syntax->d_repeat_begin = assign_syntax(syntax, "repeat");
         //syntax->d_repeat_end = assign_syntax(syntax, "until");
@@ -52,8 +52,23 @@ int main(){
     Token *token = tokenization(cod, syntax, cod_size, tokens);
     if (token == NULL){destroy_everything(token, syntax, cod); return 2;}
 
+    put_line_to_all_tokens(token);
     print_all_tokens(token);
+    //printf("\nline %d !!!error:  invalid name operator", token->number[3].line);
 
+    program(token, syntax, 0, token->nr);
+
+
+
+
+
+
+
+
+
+
+
+/*
      token->number[2].content = "4";
     token->number[2].type = "value_int";
      token->number[3].content = "+";
@@ -85,13 +100,21 @@ int main(){
      token->number[16].content = ")";
     token->number[16].type = ")";
 
-    int dd = 5 % 2;
-    int dddd = 4 + 8 * dd - 5 * ( 7 + 1 );
+
+    int dddd = 4+8*(5%2)-5*(7+1);
     printf("\nvalue = %d , and = %d", calculate_int_expresion(token, syntax, 2, 16), dddd);
 
 
 //2-15
+*/
+
+
+
+
+
+
     destroy_everything(token, syntax, cod);
+
 return 0;
 }
 

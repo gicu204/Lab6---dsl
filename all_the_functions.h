@@ -1,1997 +1,1247 @@
-#include "first_part.h"
-#include <math.h>
-#include <stdbool.h>
-
-void insert_int_in_var(Token *token, Syntax *syntax, int nr, int *value);
-int extract_int_from_var(Token *token, Syntax *syntax,  int nr);
-
-void insert_float_in_var(Token *token, Syntax *syntax, int nr, float *value);
-float extract_float_from_var(Token *token, Syntax *syntax, int nr);
-
-//void insert_bool_in_var(Token *token, int nr, bool value);
-//bool extract_bool_from_var(Token *token, int nr);
-
-void insert_char_in_var(Token *token, Syntax *syntax, int nr, char *value);
-char extract_char_from_var(Token *token, Syntax *syntax, int nr);
-
-void insert_string_in_var(Token *token, Syntax *syntax, int nr, char value[]);
-char *extract_string_from_var(Token *token, Syntax *syntax, int nr);
-void insert_one_char_string_in_var(Token *token, Syntax *syntax, int nr, char value, int where);
-char *extract_one_char_string_from_var(Token *token, Syntax *syntax, int nr, int where);
+#include "second_part.h"
+#include <ctype.h>
 
 
-float calculate_power_expresion(Token *token, Syntax *syntax, int d_start, int d_end);
-float calculate_float_expresion(Token *token, Syntax *syntax, int d_start, int d_end);
-int calculate_int_expresion(Token *token, Syntax *syntax, int d_start, int d_end);
+int *create_var_int();
+float *create_var_float();
+char *create_var_char();
+char *create_var_string(size_t capacity);
 
-bool verify_if_float_expresion(Token *token, Syntax *syntax, int d_start, int d_end);
-bool verify_if_int_expresion(Token *token, Syntax *syntax, int d_start, int d_end);
-bool calculate_next_bool_expresion(Token *token, Syntax *syntax, bool value, char operation_type[], int d_start, int d_end);
-bool verify_if_bool_expresion(Token *token, Syntax *syntax, int d_start, int d_end);
-bool verify_if_string(Token *token, Syntax *syntax, int d_start, int d_end);
-bool verify_if_char(Token *token, Syntax *syntax, int d_start, int d_end);
+bool verify_if_valid_var(Token *token,Syntax *syntax, int nr);
+void print_this_pls(Token *token,Syntax *syntax, int d_start, int d_end);
 
-bool calculate_bool_expresion(Token *token, Syntax *syntax, int d_start, int d_end);
+bool verify_if_var_int(Token *token, int nr);
+bool verify_if_var_float(Token *token, int nr);
+bool verify_if_var_char(Token *token, int nr);
+bool verify_if_var_string(Token *token, int nr);
+
+
+bool verify_if_value_int(Token *token, int nr);
+bool verify_if_value_float(Token *token, int nr);
+bool verify_if_value_char(Token *token, int nr);
+bool verify_if_value_string(Token *token, int nr);
+
+
+char *verify_type_expresion(Token *token,Syntax *syntax, int d_start, int d_end);
+char *verify_type_var(Token *token, int d_start, int d_end);
 
 
 ///
-int calculate_int_expresion(Token *token, Syntax *syntax, int d_start, int d_end){
-    int value = 0;
-    for(int i = d_start; i <= d_end; i++){
-        if(token->number[i].content != syntax->d_ignore){
-                char *type = token->number[i].type;
-
-                if(type == "value_int"){
-                    value = value + atoi(token->number[i].content);
-
-                }else if(type == "+"){
-                    i++;
-                    value = value + calculate_int_expresion(token, syntax, i, d_end);
-                    i = d_end + 1;
-
-                }else if(type == "-"){
-                    i++;
-                    value = value - calculate_int_expresion(token, syntax, i, d_end);
-                    i = d_end + 1;
-
-                }else if(type == "*"){
-                    i++;
-                    int j;
-                    int parentheses = 0;
-                    int parentheses2 = 0;
-                    for(j = i; j <= d_end; j++){
-                        if(token->number[j].type == "(") parentheses++;
-                        if(token->number[j].type == ")") parentheses--;
-                        if(token->number[j].type == "[") parentheses2++;
-                        if(token->number[j].type == "]") parentheses2--;
-                        if((parentheses == 0) & (parentheses2 == 0) & ((token->number[j].type == "+") /*|| (token->number[j].type == "^")  || (token->number[j].type == "%")*/ || (token->number[j].type == "-") || (token->number[j].type == "*"))) break;
-                    }
-                    if((parentheses != 0) & (parentheses2 != 0)){
-                        printf("\nline %d !!!error:  parentheses not matched", token->number[i].line);
-                    }
-                    if(j < d_end) j--;
-                    value = value * calculate_int_expresion(token, syntax, i, j);
-                    i = j;
-
-                /*}else if(type == "^"){
-                    i++;
-                    int j;
-                    int parentheses = 0;
-                    int parentheses2 = 0;
-                    for(j = i; j <= d_end; j++){
-                        if(token->number[j].type == "(") parentheses++;
-                        if(token->number[j].type == ")") parentheses--;
-                        if(token->number[j].type == "[") parentheses2++;
-                        if(token->number[j].type == "]") parentheses2--;
-                        if((parentheses == 0) & (parentheses2 == 0) & ((token->number[j].type == "+") /*|| (token->number[j].type == "^")  || (token->number[j].type == "%") || (token->number[j].type == "-") || (token->number[j].type == "*") || (token->number[j].type == "/"))) break;
-                    }
-                    if((parentheses != 0) & (parentheses2 != 0)){
-                        printf("\nline %d !!!error:  parentheses not matched", token->number[i].line);
-                    }
-                    if(j < d_end) j--;
-                    value = pow(value, calculate_int_expresion(token, syntax, i, j));
-                    i = j;
-                    */
-                }else if(type == "%"){
-                    i++;
-                    int j;
-                    int parentheses = 0;
-                    int parentheses2 = 0;
-                    for(j = i; j <= d_end; j++){
-                        if(token->number[j].type == "(") parentheses++;
-                        if(token->number[j].type == ")") parentheses--;
-                        if(token->number[j].type == "[") parentheses2++;
-                        if(token->number[j].type == "]") parentheses2--;
-                        if((parentheses == 0) & (parentheses2 == 0) & ((token->number[j].type == "+") /*|| (token->number[j].type == "^")*/ || (token->number[j].type == "%") || (token->number[j].type == "-") || (token->number[j].type == "*"))) break;
-                    }
-                    if((parentheses != 0) & (parentheses2 != 0)){
-                        printf("\nline %d !!!error:  parentheses not matched", token->number[i].line);
-                    }
-                    if(j < d_end) j--;
-                    value = value % calculate_int_expresion(token, syntax, i, j);
-                    i = j;
-
-                }else if(type == "("){
-                    int j;
-                    int parentheses = 0;
-                    int parentheses2 = 0;
-                    for(j = i; j <= d_end; j++){
-                        if(token->number[j].type == "(") parentheses++;
-                        if(token->number[j].type == ")") parentheses--;
-                        if(token->number[j].type == "[") parentheses2++;
-                        if(token->number[j].type == "]") parentheses2--;
-                        if((parentheses == 0) & (parentheses2 == 0) & ((token->number[j].type == "+") /*|| (token->number[j].type == "^")*/ || (token->number[j].type == "%") || (token->number[j].type == "-") || (token->number[j].type == "*"))) break;
-                    }
-                    if((parentheses != 0) & (parentheses2 != 0)){
-                        printf("\nline %d !!!error:  parentheses not matched", token->number[i].line);
-                    }
-                    if(j >= d_end){
-                            for(j; j > i; j--){
-                                if(token->number[j].type == ")") break;
-                            }
-                    }
-                    i++;
-                    j--;
-                    value = value + calculate_int_expresion(token, syntax, i, j);
-                    i = j + 2;
-
-                }else if(type == "["){
-                    int j;
-                    int parentheses = 0;
-                    int parentheses2 = 0;
-                    for(j = i; j <= d_end; j++){
-                        if(token->number[j].type == "(") parentheses++;
-                        if(token->number[j].type == ")") parentheses--;
-                        if(token->number[j].type == "[") parentheses2++;
-                        if(token->number[j].type == "]") parentheses2--;
-                        if((parentheses == 0) & (parentheses2 == 0) & ((token->number[j].type == "+") /*|| (token->number[j].type == "^")*/ || (token->number[j].type == "%") || (token->number[j].type == "-") || (token->number[j].type == "*"))) break;
-                    }
-                    if((parentheses != 0) & (parentheses2 != 0)){
-                        printf("\nline %d !!!error:  parentheses not matched", token->number[i].line);
-                    }
-                    if(j >= d_end){
-                            for(j; j > i; j--){
-                                if(token->number[j].type == ")") break;
-                            }
-                    }
-                    i++;
-                    j--;
-                    value = value + calculate_int_expresion(token, syntax, i, j);
-                    i = j + 2;
-
-
-                }else if(type == ")"){
-                    printf("\nline %d !!!error:  parentheses not matched", token->number[i].line);
-
-                }else if(type == "]"){
-                    printf("\nline %d !!!error:  parentheses not matched", token->number[i].line);
-
-                }else if(type == "trunc"){
-                    i++;
-                    int j;
-                    int parentheses = 0;
-                    int parentheses2 = 0;
-                    for(j = i; j <= d_end; j++){
-                        if(token->number[j].type == "(") parentheses++;
-                        if(token->number[j].type == ")") parentheses--;
-                        if(token->number[j].type == "[") parentheses2++;
-                        if(token->number[j].type == "]") parentheses2--;
-                        if((parentheses == 0) & (parentheses2 == 0) & ((token->number[j].type == "+") /*|| (token->number[j].type == "^")*/ || (token->number[j].type == "%") || (token->number[j].type == "-") || (token->number[j].type == "*"))) break;
-                    }
-                    if(parentheses != 0){
-                        printf("\nline %d !!!error:  parentheses not matched", token->number[i].line);
-                    }
-                    if(j < d_end) j--;
-                    value = value + trunc(calculate_float_expresion(token, syntax, i, j));
-                    i = j;
-
-                }else if(type == "var_int"){
-                    if(token->number[i].value_int == NULL){
-                        printf("\nline %d !!!error: %s has no assigned value", token->number[i].line, token->number[i].content);
-                    }else{
-                    value = value + extract_int_from_var(token,syntax, i);
-                    }
-                }
-        }
+void print_all_tokens_details(Token *token){
+    printf("\n nr = %d", token->nr);
+    for(int i = 0; i < token->nr; i++){
+     printf("\ntoken[%d] = %s",i ,token->number[i].content);
+     printf("\ntoken_type[%d] = %s",i ,token->number[i].type);
+     printf("\ntoken_line[%d] = %s",i ,token->number[i].line);
+     printf("\ntoken_value_int[%d] = %s",i ,token->number[i].value_int);
+     printf("\ntoken_value_float[%d] = %s",i ,token->number[i].value_float);
+     printf("\ntoken_value_char[%d] = %s",i ,token->number[i].value_char);
+     printf("\ntoken_value_string[%d] = %s",i ,token->number[i].value_string);
     }
-
-return value;
 }
 
 
 ///
-float calculate_float_expresion(Token *token, Syntax *syntax, int d_start, int d_end){
-    float value = 0;
-    for(int i = d_start; i <= d_end; i++){
-        if(token->number[i].content != syntax->d_ignore){
-                char *type = token->number[i].type;
+void program(Token *token, Syntax *syntax, int d_begin, int d_end){
 
-                if(type == "value_int"){
-                    value = value + atoi(token->number[i].content);
+//print_all_tokens(token);
+//printf("\ndddd %s and %zu", token->number[2].content, strlen(token->number[2].content));
 
-                }else if(type == "value_flaot"){
-                    value = value + atof(token->number[i].content);
+    for(int i = d_begin; i <= d_end; i++){
+printf(" %d", i);
 
-                }else if(type == "+"){
-                    i++;
-                    value = value + calculate_float_expresion(token, syntax, i, d_end);
-                    i = d_end + 1;
+        if(strcmp(token->number[i].content, syntax->d_integer) == 0){
+                        token->number[i].type = "int";
+                        i++;
 
-                }else if(type == "-"){
-                    i++;
-                    value = value - calculate_float_expresion(token, syntax, i, d_end);
-                    i = d_end + 1;
+                        if(strcmp(token->number[i].content, syntax->d_must_have_too) == 0){
 
-                }else if(type == "*"){
-                    i++;
-                    int j;
-                    int parentheses = 0;
-                    int parentheses2 = 0;
-                    for(j = i; j <= d_end; j++){
-                        if(token->number[j].type == "(") parentheses++;
-                        if(token->number[j].type == ")") parentheses--;
-                        if(token->number[j].type == "[") parentheses2++;
-                        if(token->number[j].type == "]") parentheses2--;
-                        if((parentheses == 0) & (parentheses2 == 0) & ((token->number[j].type == "+") /* || (token->number[j].type == "pow") || (token->number[j].type == "%")*/ || (token->number[j].type == "-") || (token->number[j].type == "*"))) break;
-                    }
-                    if((parentheses != 0) & (parentheses2 != 0)){
-                        printf("\nline %d !!!error:  parentheses not matched", token->number[i].line);
-                    }
-                    if(j < d_end) j--;
-                    value = value * calculate_float_expresion(token, syntax, i, j);
-                    i = j;
+                                bool verify = false;
+                                i++;
+                                int j = i;
 
-                }else if(type == "pow"){
-                    i++;
-                    int j;
-                    int parentheses = 0;
-                    int parentheses2 = 0;
-                    for(j = i; j <= d_end; j++){
-                        if(token->number[j].type == "(") parentheses++;
-                        if(token->number[j].type == ")") parentheses--;
-                        if(token->number[j].type == "[") parentheses2++;
-                        if(token->number[j].type == "]") parentheses2--;
-                        if((parentheses == 0) & (parentheses2 == 0) & ((token->number[j].type == "+")/* || (token->number[j].type == "pow")*/ || (token->number[j].type == "-") || (token->number[j].type == "*") || (token->number[j].type == "/"))) break;
-                    }
-                    if((parentheses != 0) & (parentheses2 != 0)){
-                        printf("\nline %d !!!error:  parentheses not matched", token->number[i].line);
-                    }
-                    if(j < d_end) j--;
+                            for(j; j <= d_end; j++){
 
-                    value = value + calculate_power_expresion(token, syntax, i++, j);
-                    i = j++;
-
-                }else if(type == "/"){
-                    i++;
-                    int j;
-                    int parentheses = 0;
-                    int parentheses2 = 0;
-                    for(j = i; j <= d_end; j++){
-                        if(token->number[j].type == "(") parentheses++;
-                        if(token->number[j].type == ")") parentheses--;
-                        if(token->number[j].type == "[") parentheses2++;
-                        if(token->number[j].type == "]") parentheses2--;
-                        if((parentheses == 0) & (parentheses2 == 0) & ((token->number[j].type == "+")/* || (token->number[j].type == "pow") || (token->number[j].type == "/")*/ || (token->number[j].type == "-") || (token->number[j].type == "*") || (token->number[j].type == "/"))) break;
-                    }
-                    if((parentheses != 0) & (parentheses2 != 0)){
-                        printf("\nline %d !!!error:  parentheses not matched", token->number[i].line);
-                    }
-                    if(j < d_end) j--;
-                    float sss = calculate_float_expresion(token, syntax, i, j);
-                    if(sss == 0){
-                        printf("\nline %d !!!error: do you want to divide by 0? :|", token->number[i].line);
-                    }else{
-                        value = value / sss;
-                    }
-                    i = j;
-
-                }else if(type == "("){
-                    int j;
-                    int parentheses = 0;
-                    int parentheses2 = 0;
-                    for(j = i; j <= d_end; j++){
-                        if(token->number[j].type == "(") parentheses++;
-                        if(token->number[j].type == ")") parentheses--;
-                        if(token->number[j].type == "[") parentheses2++;
-                        if(token->number[j].type == "]") parentheses2--;
-                        if((parentheses == 0) & (parentheses2 == 0) & ((token->number[j].type == "+")/* || (token->number[j].type == "^")*/ || (token->number[j].type == "-") || (token->number[j].type == "*") || (token->number[j].type == "/"))) break;
-                    }
-                    if((parentheses != 0) & (parentheses2 != 0)){
-                        printf("\nline %d !!!error:  parentheses not matched", token->number[i].line);
-                    }
-                    if(j >= d_end){
-                            for(j; j > i; j--){
-                                if(token->number[j].type == ")") break;
-                            }
-                    }
-                    i++;
-                    j--;
-                    value = value + calculate_float_expresion(token, syntax, i, j);
-                    i = j + 2;
-
-                }else if(type == "["){
-                    int j;
-                    int parentheses = 0;
-                    int parentheses2 = 0;
-                    for(j = i; j <= d_end; j++){
-                        if(token->number[j].type == "(") parentheses++;
-                        if(token->number[j].type == ")") parentheses--;
-                        if(token->number[j].type == "[") parentheses2++;
-                        if(token->number[j].type == "]") parentheses2--;
-                        if((parentheses == 0) & (parentheses2 == 0) & ((token->number[j].type == "+")/* || (token->number[j].type == "^")*/ || (token->number[j].type == "-") || (token->number[j].type == "*") || (token->number[j].type == "/"))) break;
-                    }
-                    if((parentheses != 0) & (parentheses2 != 0)){
-                        printf("\nline %d !!!error:  parentheses not matched", token->number[i].line);
-                    }
-                    if(j >= d_end){
-                            for(j; j > i; j--){
-                                if(token->number[j].type == ")") break;
-                            }
-                    }
-                    i++;
-                    j--;
-                    value = value + calculate_float_expresion(token, syntax, i, j);
-                    i = j + 2;
-
-
-                }else if(type == ")"){
-                    printf("\nline %d !!!error:  parentheses not matched", token->number[i].line);
-
-                }else if(type == "]"){
-                    printf("\nline %d !!!error:  parentheses not matched", token->number[i].line);
-
-                }else if(type == "trunc"){
-                    i++;
-                    int j;
-                    int parentheses = 0;
-                    int parentheses2 = 0;
-                    for(j = i; j <= d_end; j++){
-                        if(token->number[j].type == "(") parentheses++;
-                        if(token->number[j].type == ")") parentheses--;
-                        if(token->number[j].type == "[") parentheses2++;
-                        if(token->number[j].type == "]") parentheses2--;
-                        if((parentheses == 0) & (parentheses2 == 0) & ((token->number[j].type == "+")/* || (token->number[j].type == "^")*/ || (token->number[j].type == "%") || (token->number[j].type == "-") || (token->number[j].type == "*") || (token->number[j].type == "/"))) break;
-                    }
-                    if(parentheses != 0){
-                        printf("\nline %d !!!error:  parentheses not matched", token->number[i].line);
-                    }
-                    if(j < d_end) j--;
-                    value = value + trunc(calculate_float_expresion(token, syntax, i, j));
-                    i = j;
-
-                }else if(type == "var_float"){
-                    if(token->number[i].value_float == NULL){
-                        printf("\nline %d !!!error: %s has no assigned value", token->number[i].line, token->number[i].content);
-                    }else{
-                    value = value + *token->number[i].value_float;
-                    }
-                }else if(type == "var_int"){
-                    if(token->number[i].value_int == NULL){
-                        printf("\nline %d !!!error: %s has no assigned value", token->number[i].line, token->number[i].content);
-                    }else{
-                    value = value + extract_float_from_var(token,syntax, i);
-                    }
-                }
-        }
-    }
-
-return value;
-}
-
-
-///
-bool calculate_bool_expresion(Token *token, Syntax *syntax, int d_start, int d_end){
-int j, i;
-int j1, i1;
-int j2, i2;
-int terms = 0;
-bool value = false;
-bool verify = false;
-char type[5] = "NUll";
-char type1[5] = "NUll";
-char type2[5] = "NUll";
-char operation_type[5] = "NULL";
-
-    for( j = d_start; j <= d_end; i++){
-        if(token->number[j].content != syntax->d_ignore){
-            if(token->number[j].content != syntax->d_ignore){
-
-            if((token->number[j].type == "[") || (token->number[j].type == "]") || (token->number[j].type == "(")  || (token->number[j].type == ")")){
-               int parentheses = 0;
-               int parentheses2 = 0;
-               for(i = j; i <= d_end; i++){
-                            if(token->number[i].type == "(") parentheses++;
-                            if(token->number[i].type == ")") parentheses--;
-                            if(token->number[i].type == "[") parentheses2++;
-                            if(token->number[i].type == "]") parentheses2--;
-                            if((parentheses != 0) & (parentheses2 != 0) % ((token->number[j].type == "&") || (token->number[j].type == "<") || (token->number[j].type == ">") || (token->number[j].type == "=") || (token->number[j].type == "|"))) break;
-                        }
-                        if((parentheses != 0) & (parentheses2 != 0)){
-                            printf("\nline %d !!!error:  parentheses not matched", token->number[j].line);
-                        }else{
-                                for(i; i > j; i--){
-                                    if(token->number[i].type == ")") break;
-                                    if(token->number[i].type == "]") break;
-                                }
-                            if((type == "NULL") & ((type1 == "NULL") || (type2 == "NULL"))){
-                                j++;
-                                i--;
-                                if(verify_if_bool_expresion(token, syntax, j, i)){
-                                    strcpy(type, "bool");
-                                    goto done;
-                                }
-                                if(verify_if_int_expresion(token, syntax, j, i)){
-                                    strcpy(type, "int");
-                                    goto done;
-                                }
-                                if(verify_if_float_expresion(token, syntax, j, i)){
-                                    strcpy(type, "float");
-                                    goto done;
-                                }
-                            }
-                        }
-                        done:
-                        if(type1 == "NULL"){
-                            strcpy(type1, type);
-                            strcpy(type, "NUll");
-                            i1 = i;
-                            j1 = j;
-                        }else if(type2 == "NULL"){
-                            strcpy(type2, type);
-                            strcpy(type, "NUll");
-                            i2 = i;
-                            j2 = j;
-                        }
-                        j = i + 2;
-                        terms++;
-            }
-
-            if((type == "NULL") & ((type1 == "NULL") || (type2 == "NULL"))){
-                if(token->number[j].type == "value_bool"){
-                    strcpy(type, "bool"); terms++;
-                }
-                if((token->number[j].type == "var_int") || (token->number[j].type == "value_int")){
-                    strcpy(type, "int"); terms++;
-                }
-                if((token->number[j].type == "var_float") || (token->number[j].type == "value_float")){
-                    strcpy(type, "float"); terms++;
-                }
-
-                if(type1 == "NULL"){
-                            strcpy(type1, type);
-                            strcpy(type, "NUll");
-                            i1 = i;
-                            j1 = j;
-                        }else if(type2 == "NULL"){
-                            strcpy(type2, type);
-                            strcpy(type, "NUll");
-                            i2 = i;
-                            j2 = j;
-                }
-            }
-            if(operation_type == "NULL"){
-                    if(token->number[j].type == "&"){
-                        terms--;
-                        strcpy(operation_type, "&");
-                    }else if(token->number[j].type == "="){
-                        j++;
-                        if(token->number[j].type == "="){
-                            terms--;
-                            strcpy(operation_type, "==");
-                        }else{
-                             printf("\nline %d !!!error:  it should be '==' without space", token->number[j].line);
-                             return false;
-                        }
-                    }else if(token->number[j].type == "!"){
-                        j++;
-                        if(token->number[j].type == "="){
-                            terms--;
-                            strcpy(operation_type, "!=");
-                        }else{
-                             printf("\nline %d !!!error:  it should be '!=' without space", token->number[j].line);
-                             return false;
-                        }
-                    }else if(token->number[j].type == "|"){
-                        j++;
-                        if(token->number[j].type == "|"){
-                            terms--;
-                            strcpy(operation_type, "||");
-                        }else{
-                             printf("\nline %d !!!error:  it should be '||' without space", token->number[j].line);
-                             return false;
-                        }
-                    }else if(token->number[j].type == "<"){
-                        j++;
-                        if(token->number[j].type == "="){
-                            terms--;
-                            strcpy(operation_type, "<=");
-                        }else{
-                            terms--;
-                            strcpy(operation_type, "<");
-                        }
-                    }else if(token->number[j].type == ">"){
-                        j++;
-                        if(token->number[j].type == "="){
-                            terms--;
-                            strcpy(operation_type, ">=");
-                        }else{
-                            terms--;
-                            strcpy(operation_type, ">");
-                        }
-                    }
-            }
-
-
-            if((operation_type != "NULL") & (type1 != "NULL") & (type2 != "NULL")){
-
-                    if (operation_type == "&"){
-
-                            if((type1 != "bool") & (type2 != "bool")){
-                            value = calculate_bool_expresion(token, syntax, j1, i1) & calculate_bool_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "bool") & (type2 != "int")){
-                            value = calculate_bool_expresion(token, syntax, j1, i1) & calculate_int_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "bool") & (type2 != "float")){
-                            printf("\nline %d !!!error:  invalid operation bool to float", token->number[j].line);
-                            //value = calculate_bool_expresion(token, syntax, j1, i1) & calculate_float_expresion(token, syntax, j2, i2);
-                            return false;
-
-                        }else if((type1 != "int") & (type2 != "int")){
-                            value = calculate_int_expresion(token, syntax, j1, i1) & calculate_int_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "int") & (type2 != "bool")){
-                            value = calculate_int_expresion(token, syntax, j1, i1) & calculate_bool_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "int") & (type2 != "float")){
-                            printf("\nline %d !!!error:  invalid operation int to float", token->number[j].line);
-                            //value = calculate_int_expresion(token, syntax, j1, i1) & calculate_float_expresion(token, syntax, j2, i2);
-                            return false;
-
-                        }else if((type1 != "float") & (type2 != "float")){
-                            //value = calculate_float_expresion(token, syntax, j1, i1) & calculate_float_expresion(token, syntax, j2, i2);
-                            //strcpy(operation_type, "NULL");
-                            //strcpy(type1, "NULL");
-                            //strcpy(type2, "NULL");
-                            //verify = true;
-                            printf("\nline %d !!!error:  invalid operation bool to float", token->number[j].line);
-                            return false;
-
-                        }else if((type1 != "float") & (type2 != "bool")){
-                            //value = calculate_float_expresion(token, syntax, j1, i1) & calculate_bool_expresion(token, syntax, j2, i2);
-                            //strcpy(operation_type, "NULL");
-                            //strcpy(type1, "NULL");
-                            //strcpy(type2, "NULL");
-                            //verify = true;
-                            printf("\nline %d !!!error:  invalid operation float to boolean", token->number[j].line);
-                            return false;
-
-                        }else if((type1 != "float") & (type2 != "int")){
-                            //value = calculate_float_expresion(token, syntax, j1, i1) & calculate_int_expresion(token, syntax, j2, i2);
-                            //strcpy(operation_type, "NULL");
-                            //strcpy(type1, "NULL");
-                            //strcpy(type2, "NULL");
-                            //verify = true;
-                            printf("\nline %d !!!error:  invalid operation float to int", token->number[j].line);
-                            return false;
-
-                        }
-
-                    }else if(operation_type == "=="){
-
-                        if((type1 != "bool") & (type2 != "bool")){
-                            value = calculate_bool_expresion(token, syntax, j1, i1) == calculate_bool_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "bool") & (type2 != "int")){
-                            value = calculate_bool_expresion(token, syntax, j1, i1) == calculate_int_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "bool") & (type2 != "float")){
-                            value = calculate_bool_expresion(token, syntax, j1, i1) == calculate_float_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "int") & (type2 != "int")){
-                            value = calculate_int_expresion(token, syntax, j1, i1) == calculate_int_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "int") & (type2 != "bool")){
-                            value = calculate_int_expresion(token, syntax, j1, i1) == calculate_bool_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "int") & (type2 != "float")){
-                            value = calculate_int_expresion(token, syntax, j1, i1) == calculate_float_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "float") & (type2 != "float")){
-                            value = calculate_float_expresion(token, syntax, j1, i1) == calculate_float_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "float") & (type2 != "bool")){
-                            value = calculate_float_expresion(token, syntax, j1, i1) == calculate_bool_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "float") & (type2 != "int")){
-                            value = calculate_float_expresion(token, syntax, j1, i1) == calculate_int_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }
-                    }else if(operation_type == "!="){
-
-
-                        if((type1 != "bool") & (type2 != "bool")){
-                            value = calculate_bool_expresion(token, syntax, j1, i1) != calculate_bool_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "bool") & (type2 != "int")){
-                            value = calculate_bool_expresion(token, syntax, j1, i1) != calculate_int_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "bool") & (type2 != "float")){
-                            value = calculate_bool_expresion(token, syntax, j1, i1) != calculate_float_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "int") & (type2 != "int")){
-                            value = calculate_int_expresion(token, syntax, j1, i1) != calculate_int_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "int") & (type2 != "bool")){
-                            value = calculate_int_expresion(token, syntax, j1, i1) != calculate_bool_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "int") & (type2 != "float")){
-                            value = calculate_int_expresion(token, syntax, j1, i1) != calculate_float_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "float") & (type2 != "float")){
-                            value = calculate_float_expresion(token, syntax, j1, i1) != calculate_float_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "float") & (type2 != "bool")){
-                            value = calculate_float_expresion(token, syntax, j1, i1) != calculate_bool_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "float") & (type2 != "int")){
-                            value = calculate_float_expresion(token, syntax, j1, i1) != calculate_int_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }
-
-                    }else if(operation_type == "||"){
-
-                        if((type1 != "bool") & (type2 != "bool")){
-                            value = calculate_bool_expresion(token, syntax, j1, i1) || calculate_bool_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "bool") & (type2 != "int")){
-                            value = calculate_bool_expresion(token, syntax, j1, i1) || calculate_int_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "bool") & (type2 != "float")){
-                            value = calculate_bool_expresion(token, syntax, j1, i1) || calculate_float_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "int") & (type2 != "int")){
-                            value = calculate_int_expresion(token, syntax, j1, i1) || calculate_int_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "int") & (type2 != "bool")){
-                            value = calculate_int_expresion(token, syntax, j1, i1) || calculate_bool_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "int") & (type2 != "float")){
-                            value = calculate_int_expresion(token, syntax, j1, i1) || calculate_float_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "float") & (type2 != "float")){
-                            value = calculate_float_expresion(token, syntax, j1, i1) || calculate_float_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "float") & (type2 != "bool")){
-                            value = calculate_float_expresion(token, syntax, j1, i1) || calculate_bool_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "float") & (type2 != "int")){
-                            value = calculate_float_expresion(token, syntax, j1, i1) || calculate_int_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }
-
-                    }else if(operation_type == "<="){
-
-                            if((type1 != "bool") & (type2 != "bool")){
-                            value = calculate_bool_expresion(token, syntax, j1, i1) <= calculate_bool_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "bool") & (type2 != "int")){
-                            value = calculate_bool_expresion(token, syntax, j1, i1) <= calculate_int_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "bool") & (type2 != "float")){
-                            value = calculate_bool_expresion(token, syntax, j1, i1) <= calculate_float_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "int") & (type2 != "int")){
-                            value = calculate_int_expresion(token, syntax, j1, i1) <= calculate_int_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "int") & (type2 != "bool")){
-                            value = calculate_int_expresion(token, syntax, j1, i1) <= calculate_bool_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "int") & (type2 != "float")){
-                            value = calculate_int_expresion(token, syntax, j1, i1) <= calculate_float_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "float") & (type2 != "float")){
-                            value = calculate_float_expresion(token, syntax, j1, i1) <= calculate_float_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "float") & (type2 != "bool")){
-                            value = calculate_float_expresion(token, syntax, j1, i1) <= calculate_bool_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "float") & (type2 != "int")){
-                            value = calculate_float_expresion(token, syntax, j1, i1) <= calculate_int_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }
-
-                    }else if(operation_type == "<"){
-
-                        if((type1 != "bool") & (type2 != "bool")){
-                            value = calculate_bool_expresion(token, syntax, j1, i1) < calculate_bool_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "bool") & (type2 != "int")){
-                            value = calculate_bool_expresion(token, syntax, j1, i1) < calculate_int_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "bool") & (type2 != "float")){
-                            value = calculate_bool_expresion(token, syntax, j1, i1) < calculate_float_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "int") & (type2 != "int")){
-                            value = calculate_int_expresion(token, syntax, j1, i1) < calculate_int_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "int") & (type2 != "bool")){
-                            value = calculate_int_expresion(token, syntax, j1, i1) < calculate_bool_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "int") & (type2 != "float")){
-                            value = calculate_int_expresion(token, syntax, j1, i1) < calculate_float_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "float") & (type2 != "float")){
-                            value = calculate_float_expresion(token, syntax, j1, i1) < calculate_float_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "float") & (type2 != "bool")){
-                            value = calculate_float_expresion(token, syntax, j1, i1) < calculate_bool_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "float") & (type2 != "int")){
-                            value = calculate_float_expresion(token, syntax, j1, i1) < calculate_int_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }
-
-                    }else if(operation_type == ">="){
-
-                        if((type1 != "bool") & (type2 != "bool")){
-                            value = calculate_bool_expresion(token, syntax, j1, i1) >= calculate_bool_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "bool") & (type2 != "int")){
-                            value = calculate_bool_expresion(token, syntax, j1, i1) >= calculate_int_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "bool") & (type2 != "float")){
-                            value = calculate_bool_expresion(token, syntax, j1, i1) >= calculate_float_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "int") & (type2 != "int")){
-                            value = calculate_int_expresion(token, syntax, j1, i1) >= calculate_int_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "int") & (type2 != "bool")){
-                            value = calculate_int_expresion(token, syntax, j1, i1) >= calculate_bool_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "int") & (type2 != "float")){
-                            value = calculate_int_expresion(token, syntax, j1, i1) >= calculate_float_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "float") & (type2 != "float")){
-                            value = calculate_float_expresion(token, syntax, j1, i1) >= calculate_float_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "float") & (type2 != "bool")){
-                            value = calculate_float_expresion(token, syntax, j1, i1) >= calculate_bool_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "float") & (type2 != "int")){
-                            value = calculate_float_expresion(token, syntax, j1, i1) >= calculate_int_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }
-
-                    }else if(operation_type == ">"){
-
-                        if((type1 != "bool") & (type2 != "bool")){
-                            value = calculate_bool_expresion(token, syntax, j1, i1) > calculate_bool_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "bool") & (type2 != "int")){
-                            value = calculate_bool_expresion(token, syntax, j1, i1) >= calculate_int_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "bool") & (type2 != "float")){
-                            value = calculate_bool_expresion(token, syntax, j1, i1) >= calculate_float_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "int") & (type2 != "int")){
-                            value = calculate_int_expresion(token, syntax, j1, i1) >= calculate_int_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "int") & (type2 != "bool")){
-                            value = calculate_int_expresion(token, syntax, j1, i1) >= calculate_bool_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "int") & (type2 != "float")){
-                            value = calculate_int_expresion(token, syntax, j1, i1) >= calculate_float_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "float") & (type2 != "float")){
-                            value = calculate_float_expresion(token, syntax, j1, i1) >= calculate_float_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "float") & (type2 != "bool")){
-                            value = calculate_float_expresion(token, syntax, j1, i1) >= calculate_bool_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }else if((type1 != "float") & (type2 != "int")){
-                            value = calculate_float_expresion(token, syntax, j1, i1) >= calculate_int_expresion(token, syntax, j2, i2);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            strcpy(type2, "NULL");
-                            verify = true;
-
-                        }
-
-                    }
-
-                }
-
-
-
-            }else if((operation_type != "NULL") & verify){
-                            j++;
-                            value = calculate_next_bool_expresion(token, syntax, value, operation_type, j, d_end);
-            }
-        }
-        }
-return value;
-}
-
-
-///
-bool calculate_next_bool_expresion(Token *token, Syntax *syntax, bool value, char operation_type[], int d_start, int d_end){
-
-int j, i;
-int j1, i1;
-int terms = 0;
-bool value1;
-bool verify = false;
-char type[5] = "NUll";
-char type1[5] = "NUll";
-
-    for( j = d_start; j <= d_end; i++){
-        if(token->number[j].content != syntax->d_ignore){
-
-            if((token->number[j].type == "[") || (token->number[j].type == "]") || (token->number[j].type == "(")  || (token->number[j].type == ")")){
-               int parentheses = 0;
-               int parentheses2 = 0;
-               for(i = j; i <= d_end; i++){
-                            if(token->number[i].type == "(") parentheses++;
-                            if(token->number[i].type == ")") parentheses--;
-                            if(token->number[i].type == "[") parentheses2++;
-                            if(token->number[i].type == "]") parentheses2--;
-                            if((parentheses != 0) & (parentheses2 != 0) % ((token->number[j].type == "&") || (token->number[j].type == "<") || (token->number[j].type == ">") || (token->number[j].type == "=") || (token->number[j].type == "|"))) break;
-                        }
-                        if((parentheses != 0) & (parentheses2 != 0)){
-                            printf("\nline %d !!!error:  parentheses not matched", token->number[j].line);
-                        }else{
-                                for(i; i > j; i--){
-                                    if(token->number[i].type == ")") break;
-                                    if(token->number[i].type == "]") break;
-                                }
-                            if((type == "NULL") & (type1 == "NULL")){
-                                j++;
-                                i--;
-                                if(verify_if_bool_expresion(token, syntax, j, i)){
-                                    strcpy(type, "bool");
-                                    goto done;
-                                }
-                                if(verify_if_int_expresion(token, syntax, j, i)){
-                                    strcpy(type, "int");
-                                    goto done;
-                                }
-                                if(verify_if_float_expresion(token, syntax, j, i)){
-                                    strcpy(type, "float");
-                                    goto done;
-                                }
-                            }
-                        }
-                        done:
-                        if(type1 == "NULL"){
-                            strcpy(type1, type);
-                            strcpy(type, "NUll");
-                            i1 = i;
-                            j1 = j;
-                        }
-            }
-
-            if((type == "NULL") & (type1 == "NULL")){
-                if(token->number[j].type == "value_bool"){
-                    strcpy(type, "bool"); terms++;
-                }
-                if((token->number[j].type == "var_int") || (token->number[j].type == "value_int")){
-                    strcpy(type, "int"); terms++;
-                }
-                if((token->number[j].type == "var_float") || (token->number[j].type == "value_float")){
-                    strcpy(type, "float"); terms++;
-                }
-
-                if(type1 == "NULL"){
-                            strcpy(type1, type);
-                            strcpy(type, "NUll");
-                            i1 = i;
-                            j1 = j;
-                }
-            }
-            if(operation_type == "NULL"){
-                    if(token->number[j].type == "&"){
-                        terms--;
-                        strcpy(operation_type, "&");
-                    }else if(token->number[j].type == "="){
-                        j++;
-                        if(token->number[j].type == "="){
-                            terms--;
-                            strcpy(operation_type, "==");
-                        }else{
-                             printf("\nline %d !!!error:  it should be '==' without space", token->number[j].line);
-                             return false;
-                        }
-                    }else if(token->number[j].type == "!"){
-                        j++;
-                        if(token->number[j].type == "="){
-                            terms--;
-                            strcpy(operation_type, "!=");
-                        }else{
-                             printf("\nline %d !!!error:  it should be '!=' without space", token->number[j].line);
-                             return false;
-                        }
-                    }else if(token->number[j].type == "<"){
-                        j++;
-                        if(token->number[j].type == "="){
-                            terms--;
-                            strcpy(operation_type, "<=");
-                        }else{
-                            terms--;
-                            strcpy(operation_type, "<");
-                        }
-                    }else if(token->number[j].type == ">"){
-                        j++;
-                        if(token->number[j].type == "="){
-                            terms--;
-                            strcpy(operation_type, ">=");
-                        }else{
-                            terms--;
-                            strcpy(operation_type, ">");
-                        }
-                    }
-            }
-
-
-            if((operation_type != "NULL") & (type1 != "NULL")){
-                if(operation_type == "&"){
-
-                        if(type1 != "bool"){
-                            value1 = value & calculate_bool_expresion(token, syntax, j1, i1);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            verify = true;
-
-                        }else if(type1 != "int"){
-                            value1 = value & calculate_int_expresion(token, syntax, j1, i1);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            verify = true;
-
-                        }else if(type1 != "float"){
-                            //value1 = value & calculate_float_expresion(token, syntax, j1, i1);
-                            //strcpy(operation_type, "NULL");
-                            //strcpy(type1, "NULL");
-                            //verify = true;
-                            printf("\nline %d !!!error:  invalid operation bool to float", token->number[j].line);
-                            return false;
-
-                        }
-
-                }else if(operation_type == "=="){
-
-                        if(type1 != "bool"){
-                            value1 = value == calculate_bool_expresion(token, syntax, j1, i1);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            verify = true;
-
-                        }else if(type1 != "int"){
-                            value1 = value == calculate_int_expresion(token, syntax, j1, i1);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            verify = true;
-
-                        }else if(type1 != "float"){
-                            value1 = value == calculate_float_expresion(token, syntax, j1, i1);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            verify = true;
-
-                        }
-
-                }else if(operation_type == "!="){
-
-                        if(type1 != "bool"){
-                            value1 = value == calculate_bool_expresion(token, syntax, j1, i1);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            verify = true;
-
-                        }else if(type1 != "int"){
-                            value1 = value == calculate_int_expresion(token, syntax, j1, i1);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            verify = true;
-
-                        }else if(type1 != "float"){
-                            value1 = value == calculate_float_expresion(token, syntax, j1, i1);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            verify = true;
-
-                        }
-
-                }else if(operation_type == "<="){
-
-                        if(type1 != "bool"){
-                            value1 = value <= calculate_bool_expresion(token, syntax, j1, i1);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            verify = true;
-
-                        }else if(type1 != "int"){
-                            value1 = value <= calculate_int_expresion(token, syntax, j1, i1);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            verify = true;
-
-                        }else if(type1 != "float"){
-                            value1 = value <= calculate_float_expresion(token, syntax, j1, i1);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            verify = true;
-
-                        }
-
-                }else if(operation_type == "<"){
-
-                        if(type1 != "bool"){
-                            value1 = value < calculate_bool_expresion(token, syntax, j1, i1);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            verify = true;
-
-                        }else if(type1 != "int"){
-                            value1 = value < calculate_int_expresion(token, syntax, j1, i1);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            verify = true;
-
-                        }else if(type1 != "float"){
-                            value1 = value < calculate_float_expresion(token, syntax, j1, i1);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            verify = true;
-
-                        }
-
-                }else if(operation_type == ">="){
-
-                        if(type1 != "bool"){
-                            value1 = value >= calculate_bool_expresion(token, syntax, j1, i1);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            verify = true;
-
-                        }else if(type1 != "int"){
-                            value1 = value >= calculate_int_expresion(token, syntax, j1, i1);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            verify = true;
-
-                        }else if(type1 != "float"){
-                            value1 = value >= calculate_float_expresion(token, syntax, j1, i1);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            verify = true;
-
-                        }
-
-                }else if(operation_type == ">"){
-
-                        if(type1 != "bool"){
-                            value1 = value > calculate_bool_expresion(token, syntax, j1, i1);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            verify = true;
-
-                        }else if(type1 != "int"){
-                            value1 = value > calculate_int_expresion(token, syntax, j1, i1);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            verify = true;
-
-                        }else if(type1 != "float"){
-                            value1 = value > calculate_float_expresion(token, syntax, j1, i1);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            verify = true;
-
-                        }
-
-                }else if(operation_type == "||"){
-
-                        if(type1 != "bool"){
-                            value1 = value || calculate_bool_expresion(token, syntax, j1, i1);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            verify = true;
-
-                        }else if(type1 != "int"){
-                            value1 = value || calculate_int_expresion(token, syntax, j1, i1);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            verify = true;
-
-                        }else if(type1 != "float"){
-                            value1 = value || calculate_float_expresion(token, syntax, j1, i1);
-                            strcpy(operation_type, "NULL");
-                            strcpy(type1, "NULL");
-                            verify = true;
-
-                        }
-
-                }
-
-
-
-            }else if((operation_type != "NULL") & verify){
-                            j++;
-                            value = calculate_next_bool_expresion(token, syntax, value, operation_type, j, d_end);
-        }
-        }
-    }
-return value1;
-}
-
-
-///
-float calculate_power_expresion(Token *token, Syntax *syntax, int d_start, int d_end){
-float value;
-float value1;
-float value2;
-int valuesss = 0;
-
-int i = d_start;
-                for(int n = 0; n < 2; n++){
-                    int j;
-                    int parentheses = 0;
-                    int parentheses2 = 0;
-                    for(j = i; j <= d_end; j++){
-                        if(token->number[j].type == "(") parentheses++;
-                        if(token->number[j].type == ")") parentheses--;
-                        if(token->number[j].type == "[") parentheses2++;
-                        if(token->number[j].type == "]") parentheses2--;
-                        if((parentheses == 0) & (parentheses2 == 0) & (token->number[j].type == ",")) break;
-                    }
-                    if((parentheses != 0) & (parentheses2 == 0)){
-                        printf("\nline %d !!!error:  parentheses not matched", token->number[i].line);
-                    }
-                    if(j < d_end) j--;
-
-                    if(valuesss == 0){
-                        value1 = calculate_float_expresion(token, syntax, i, j);
-                    }else{
-                        value2 = calculate_float_expresion(token, syntax, i, j);
-                    }
-                }
-    value = pow(value1, value2);
-return value;
-
-}
-
-
-///
-bool verify_if_float_expresion(Token *token, Syntax *syntax, int d_start, int d_end){
-    for(int j = d_start; j <= d_end; j++){
-        if((token->number[j].type != "+") & (token->number[j].type != "trunc") & (token->number[j].type != "pow") & (token->number[j].type != " ") & (token->number[j].type != "[") & (token->number[j].type != "]") & (token->number[j].type != "(")  & (token->number[j].type != ")") & (token->number[j].type != "var_float") & (token->number[j].type != "var_int") & (token->number[j].type != "value_float") & (token->number[j].type != "value_int") & (token->number[j].type != "/") & (token->number[j].type != "-") & (token->number[j].type != "*")){
-            if(token->number[j].type == "%") printf("\nline %d !!!error:  in int expressions you cant use %", token->number[j].line);
-            return false;
-        }
-        if(token->number[j].type != "pow"){
-            int i;
-            int coma = 0;
-                    int parentheses = 0;
-                    int parentheses2 = 0;
-                    for(i = j; i <= d_end; i++){
-                        if(token->number[i].type == ",") coma++;
-                        if(token->number[i].type == "(") parentheses++;
-                        if(token->number[i].type == ")") parentheses--;
-                        if(token->number[i].type == "[") parentheses2++;
-                        if(token->number[i].type == "]") parentheses2--;
-                        if((parentheses == 0) & (parentheses2 == 0) & ((token->number[i].type == "+")/* || (token->number[j].type == "^")*/ || (token->number[i].type == "-") || (token->number[i].type == "*") || (token->number[i].type == "/"))) break;
-                    }
-                    if((parentheses != 0) & (parentheses2 != 0)){
-                        printf("\nline %d !!!error:  parentheses not matched", token->number[i].line);
-                    }
-                    if(i >= d_end){
-                            for(i; i > j; i--){
-                                if(token->number[i].type == ")") break;
-                            }
-                    }
-                    j++;
-                    i--;
-                    if(verify_if_float_expresion){
-                        i = j + 2;
-                    }else{
-                        printf("\nline %d !!!error:  power can process only float expressions", token->number[i].line);
-                        return false;
-                    }
-                    if(coma != 1){
-                        printf("\nline %d !!!error:  power is write with coma like that: pow(value1, value2)", token->number[i].line);
-                        return false;
-                    }
-
-        }
-    }
-return true;
-}
-
-
-///
-bool verify_if_int_expresion(Token *token, Syntax *syntax, int d_start, int d_end){
-    for(int j = d_start; j <= d_end; j++){
-        if((token->number[j].type != "+") & (token->number[j].type != "trunc") & (token->number[j].type != " ") & (token->number[j].type != "[") & (token->number[j].type != "]") & (token->number[j].type != "(")  & (token->number[j].type != ")") & (token->number[j].type != "var_int") & (token->number[j].type != "value_int") & (token->number[j].type != "%") & (token->number[j].type != "-") & (token->number[j].type != "*")){
-        if(token->number[j].type == "/") printf("\nline %d !!!error:  in int expressions you cant use /", token->number[j].line);
-            return false;
-        }
-        if(token->number[j].type == "trunc"){
-            int i;
-                    int parentheses = 0;
-                    int parentheses2 = 0;
-                    for(i = j; i <= d_end; i++){
-                        if(token->number[i].type == "(") parentheses++;
-                        if(token->number[i].type == ")") parentheses--;
-                        if(token->number[i].type == "[") parentheses2++;
-                        if(token->number[i].type == "]") parentheses2--;
-                        if((parentheses == 0) & (parentheses2 == 0) & ((token->number[i].type == "+")/* || (token->number[j].type == "^")*/ || (token->number[i].type == "-") || (token->number[i].type == "*") || (token->number[i].type == "/"))) break;
-                    }
-                    if((parentheses != 0) & (parentheses2 != 0)){
-                        printf("\nline %d !!!error:  parentheses not matched", token->number[i].line);
-                    }
-                    if(i >= d_end){
-                            for(i; i > j; i--){
-                                if(token->number[i].type == ")") break;
-                            }
-                    }
-                    j++;
-                    i--;
-                    if(verify_if_float_expresion){
-                        i = j + 2;
-                    }else{
-                        printf("\nline %d !!!error:  trunk can process only float expressions", token->number[i].line);
-                        return false;
-                    }
-        }
-    }
-return true;
-}
-
-
-
-
-///
-bool verify_if_bool_expresion(Token *token, Syntax *syntax, int d_start, int d_end){
-    int j, i;
-    int parentheses = 0;
-    int parentheses2 = 0;
-    int terms = 0;
-    char type[6] = "NULL";
-
-    for(j = d_start; j <= d_end; j++){
-        if(token->number[j].content != syntax->d_ignore){
-
-            if((token->number[j].type == "[") || (token->number[j].type == "]") || (token->number[j].type == "(")  || (token->number[j].type == ")")){
-               for(i = j; i <= d_end; i++){
-                            if(token->number[i].type == "(") parentheses++;
-                            if(token->number[i].type == ")") parentheses--;
-                            if(token->number[i].type == "[") parentheses2++;
-                            if(token->number[i].type == "]") parentheses2--;
-                            if((parentheses != 0) & (parentheses2 != 0) % ((token->number[j].type == "&") || (token->number[j].type == "<") || (token->number[j].type == ">") || (token->number[j].type == "=") || (token->number[j].type == "|"))) break;
-                        }
-                        if((parentheses != 0) & (parentheses2 != 0)){
-                            printf("\nline %d !!!error:  parentheses not matched", token->number[j].line);
-                        }else{
-                                for(i; i > j; i--){
-                                    if(token->number[i].type == ")") break;
-                                    if(token->number[i].type == "]") break;
-                                }
-
-                                if(verify_if_bool_expresion(token, syntax, j++, i--)){
-                                    strcpy(type, "bool");
-                                    goto done;
-                                }else if(verify_if_int_expresion(token, syntax, j++, i--)){
-                                    strcpy(type, "int");
-                                    goto done;
-                                }else if(verify_if_float_expresion(token, syntax, j++, i--)){
-                                    strcpy(type, "float");
-                                    goto done;
-                                }
-                        }
-                        done:
-                        j = i + 2;
-                        terms++;
-
-            }
-
-                if((token->number[j].type == "var_bool") || (token->number[j].type == "value_bool")){
-                     terms++;
-                }
-                if((token->number[j].type == "var_int") || (token->number[j].type == "value_int")) {
-                    terms++;
-                }
-                if((token->number[j].type == "var_float") || (token->number[j].type == "value_float")){
-                    terms++;
-                }
-
-            if(token->number[j].type == "&"){
-                terms--;
-            }else if(token->number[j].type == "="){
-                terms--;
-            }else if(token->number[j].type == "!"){
-                j++;
-                if(token->number[j].type == "="){
-                    terms--;
-                }else{
-                     printf("\nline %d !!!error:  it should be '!='(btw, no space betwen)", token->number[j].line);
-                     return false;
-                }
-            }else if(token->number[j].type == "<"){
-                j++;
-                if(token->number[j].type == "="){
-                    terms--;
-                }else{
-                    terms--;
-                }
-            }else if(token->number[j].type == ">"){
-                j++;
-                if(token->number[j].type == "="){
-                    terms--;
-                }else{
-                    terms--;
-                }
-            }
-        }
-    }
-    if(terms != 1) {printf("\nline %d !!!error:  probably you forgot something", token->number[j].line);return false;}
-return true;
-}
-/*//
-bool verify_if_bool_expresion(Token *token, Syntax *syntax, int d_start, int d_end){
-    int j, i;
-    int parentheses = 0;
-    int parentheses2 = 0;
-    int terms = 0;
-    char type[] = "NULL";
-
-    for(j = d_start; j <= d_end; j++){
-        if(token->number[j].content != syntax->d_ignore){
-
-            if((token->number[j].type == "[") || (token->number[j].type == "]") || (token->number[j].type == "(")  || (token->number[j].type == ")")){
-               for(i = j; i <= d_end; i++){
-                            if(token->number[i].type == "(") parentheses++;
-                            if(token->number[i].type == ")") parentheses--;
-                            if(token->number[i].type == "[") parentheses2++;
-                            if(token->number[i].type == "]") parentheses2--;
-                            if((parentheses != 0) & (parentheses2 != 0) % ((token->number[j].type == "&") || (token->number[j].type == "<") || (token->number[j].type == ">") || (token->number[j].type == "=") || (token->number[j].type == "|"))) break;
-                        }
-                        if((parentheses != 0) & (parentheses2 != 0)){
-                            printf("\nline %d !!!error:  parentheses not matched", token->number[j].line);
-                        }else{
-                                for(i; i > j; i--){
-                                    if(token->number[i].type == ")") break;
-                                    if(token->number[i].type == "]") break;
-                                }
-                            if(type == "NULL"){
-                                if(verify_if_bool_expresion(token, syntax, j++, i--)){
-                                    strcpy(type, "bool");
-                                    goto done;
-                                }
-                                if(verify_if_int_expresion(token, syntax, j++, i--)){
-                                    strcpy(type, "int");
-                                    goto done;
-                                }
-                                if(verify_if_float_expresion(token, syntax, j++, i--)){
-                                    strcpy(type, "float");
-                                    goto done;
-                                }
-                            }else{
-                                if((type == "bool") & (verify_if_bool_expresion(token, syntax, j++, i--))) goto done;
-                                if((type == "int") & (verify_if_int_expresion(token, syntax, j++, i--))) goto done;
-                                if((type == "float") & (verify_if_float_expresion(token, syntax, j++, i--)))goto done;
-                                printf("\nline %d !!!error:  you are trying to compare %s with something else", token->number[j].line, type);
-                                return false;
-                            }
-                        }
-                        done:
-                        j = i + 2;
-                        terms++;
-
-            }
-
-            if(type == "NULL"){
-                if((type == "NULL") & ((token->number[j].type == "var_bool") || (token->number[j].type == "value_bool"))){
-                        strcpy(type, "bool"); terms++;
-                }
-                if((type == "NULL") & ((token->number[j].type == "var_int") || (token->number[j].type == "value_int"))) {
-                    strcpy(type, "int"); terms++;
-                }
-                if((type == "NULL") & ((token->number[j].type == "var_float") || (token->number[j].type == "value_float"))) {
-                    strcpy(type, "float"); terms++;
-                }
-            }else if(terms == 0){
-                if((type == "bool") & ((token->number[j].type == "var_bool") || (token->number[j].type == "value_bool"))) {terms++;}
-                if((type == "int") & ((token->number[j].type == "var_int") || (token->number[j].type == "value_int"))) {terms++;}
-                if((type == "float") & ((token->number[j].type == "var_float") || (token->number[j].type == "value_float"))) {terms++;}
-            }
-
-            if(token->number[j].type == "&"){
-                terms--;
-            }else if(token->number[j].type == "="){
-                terms--;
-            }else if(token->number[j].type == "!"){
-                j++;
-                if(token->number[j].type == "="){
-                    terms--;
-                }else{
-                     printf("\nline %d !!!error:  it should be '!=' without space", token->number[j].line);
-                     return false;
-                }
-            }else if(token->number[j].type == "<"){
-                j++;
-                if(token->number[j].type == "="){
-                    terms--;
-                }else{
-                    terms--;
-                }
-            }else if(token->number[j].type == ">"){
-                j++;
-                if(token->number[j].type == "="){
-                    terms--;
-                }else{
-                    terms--;
-                }
-            }
-        }
-    }
-    if(terms != 1) {printf("\nline %d !!!error:  probably you forgot something or you put a random space", token->number[j].line);return false;}
-return true;
-}
-
-
-*///
-bool verify_if_char(Token *token, Syntax *syntax, int d_start, int d_end){
-int comas = 0;
-int chars = 0;
-int i = d_start;
-    for( i ; i <= d_end; i++){
-        if(token->number[i].type == "\"") comas++;
-        if((comas%2 == 1) & (token->number[i].type != "\"")) chars++;
-    }
-    if(comas%2 == 0){
-        printf("\nline %d !!!error:  comas not matched", token->number[i].line);
-        return false;
-    }
-    if(chars > 1){
-        //printf("\nline %d !!!error:  string to char operator", token->number[i].line);
-        return false;
-    }
-return true;
-}
-
-
-///
-bool verify_if_string(Token *token, Syntax *syntax, int d_start, int d_end){
-int comas = 0;
-int i;
-    for(i = d_start; i <= d_end; i++){
-        if(token->number[i].type == "\"") comas++;
-        //if((comas%2 == 1) & (token->number[i].type != "\"")) chars++;
-    }
-    if(comas%2 == 0){
-        printf("\nline %d !!!error:  comas not matched", token->number[i].line);
-        return false;
-    }
-return true;
-}
-
-
-
-
-///
-void insert_int_in_var(Token *token, Syntax *syntax, int nr, int *value){
-        for(int i = 0; i < nr; i++){
-                if(token->number[i].type == "int"){
-                   for(int j = i; j < nr; j++){
-                        if(token->number[i].type != syntax->d_ignore){
-                            if(token->number[i].type == "var_int"){
-                                    if(token->number[i].content == token->number[nr].content){
-                                        token->number[i].value_int = value;
+                                if(strcmp(token->number[j].content, syntax->d_end_of_something) == 0){
+                                    if(verify){//printf("\ndddd");
+                                        j--;
+                                        break;
+                                    }else{
+                                        j--;
+                                        printf("\nline %d !!!error:  invalid name operator", token->number[i].line);
                                         break;
                                     }
+                                }
+
+                                if(strcmp(token->number[j].content, syntax->d_ignore) != 0){
+                                    if(verify_if_valid_var(token,syntax, j)){
+                                        token->number[j].value_int = create_var_int();
+                                        token->number[j].type = "var_int";
+                                        verify = true;
+                                    }else{
+                                        printf("\nline %d !!!error:  invalid name operator", token->number[j].line);
+                                    }
+
+                                    //if(verify)
+                                    //    printf("\nline %d !!!error:  invalid name operator", token->number[i].line);
+                                    //
+                                }
+
                             }
+                            i = j;
                         }
-                   }
-                }
+            //printf("\ntoken[%d] = %s", 4, token->number[4].type);
 
-        }
-    printf("\n      !!!error:  %s first time used", token->number[nr].content);
 
-}
-///
-int extract_int_from_var(Token *token, Syntax *syntax, int nr){
+        }else if(strcmp(token->number[i].content, syntax->d_float) == 0){
+            token->number[i].type = "float";
 
-        for(int i = 0; i < nr; i++){
-                if(token->number[i].type == "int"){
-                   for(int j = i; j < nr; j++){
-                        if(token->number[i].type != syntax->d_ignore){
-                            if(token->number[i].type == "var_int"){
-                                    if(token->number[i].content == token->number[nr].content){
-                                        return *token->number[i].value_int;
+                        i++;
+
+                        if(strcmp(token->number[i].content, syntax->d_must_have_too) == 0){
+                                bool verify = false;
+                                i++;
+                                int j = i;
+
+                            for( j; j <= d_end; j++){
+
+                                if(strcmp(token->number[j].content, syntax->d_end_of_something) == 0){
+                                    if(verify){//printf("\ndddd");
+                                        j--;
+                                        break;
+                                    }else{
+                                        j--;
+                                        printf("\nline %d !!!error:  invalid name operator", token->number[i].line);
                                         break;
                                     }
+                                }
+
+                                if(strcmp(token->number[j].content, syntax->d_ignore) != 0){
+                                    if(verify_if_valid_var(token,syntax, j)){
+                                        token->number[j].value_float = create_var_float();
+                                        token->number[j].type = "var_float";
+                                        verify = true;
+                                    }else{
+                                        printf("\nline %d !!!error:  invalid name operator", token->number[j].line);
+                                    }
+
+                                    //if(verify)
+                                    //    printf("\nline %d !!!error:  invalid name operator", token->number[i].line);
+                                    //
+                                }
+
+                            }
+                            i = j;
+                        }
+
+                //printf("\ntoken[%d] = %s", 4, token->number[4].type);
+
+
+        }else if(strcmp(token->number[i].content, syntax->d_char) == 0){
+            token->number[i].type = "char";
+                        i++;
+
+                        if(token->number[i].content == syntax->d_must_have_too){
+                                bool verify = false;
+                                i++;
+                                int j =i;
+
+                            for( j; j <= d_end; j++){
+
+                                if(token->number[j].content == syntax->d_end_of_something){
+                                    if(verify){
+                                        j--;
+                                        break;
+                                    }else{
+                                        j--;
+                                        printf("\nline %d !!!error:  invalid name operator", token->number[i].line);
+                                        break;
+                                    }
+                                }
+
+                                if(strcmp(token->number[j].content, syntax->d_ignore) != 0){
+                                    if(verify_if_valid_var(token,syntax, i)){
+                                        token->number[j].value_char = create_var_char();
+                                        token->number[j].type = "var_char";
+                                        verify = true;
+                                    }else{
+                                        printf("\nline %d !!!error:  invalid name operator", token->number[i].line);
+                                    }
+
+                                    //if(verify)
+                                    //    printf("\nline %d !!!error:  invalid name operator", token->number[i].line);
+                                    //
+                                }
+
+                            }
+                            i = j;
+                        }
+
+
+        }else if(strcmp(token->number[i].content, syntax->d_string) == 0){
+            token->number[i].type = "string";
+
+                        i++;
+
+                        if(strcmp(token->number[i].content, syntax->d_must_have_too) == 0){
+                                bool verify = false;
+                                i++;
+
+                            for( i; i <= d_end; i++){
+
+                                if(strcmp(token->number[i].content, syntax->d_end_of_something) == 0){
+                                    if(verify){
+                                        i--;
+                                        break;
+                                    }else{
+                                        i--;
+                                        printf("\nline %d !!!error:  invalid name operator", token->number[i].line);
+                                        break;
+                                    }
+                                }
+
+                                if(strcmp(token->number[i].content, syntax->d_ignore) != 0){
+                                    if(verify_if_valid_var(token,syntax, i)){
+                                            i++;
+                                                int j;
+                                                int parentheses = 0;
+                                                int parentheses2 = 0;
+                                                int ssstart = 0;
+                                                int dddend = 0;
+                                                for(j = i; j <= d_end; j++){
+                                                    if(strcmp(token->number[j].content, "(") == 0) parentheses++;
+                                                    if(strcmp(token->number[j].content, ")") == 0) parentheses--;
+                                                    if(strcmp(token->number[j].content, "[") == 0) {
+                                                            parentheses2++;
+                                                            ssstart = j + 1;
+                                                    }
+                                                    if(strcmp(token->number[j].content, "]") == 0) {
+                                                            parentheses2--;
+                                                            dddend = j - 1;
+                                                    }
+                                                    if((parentheses == 0) & (parentheses2 == 0) & (strcmp(token->number[j].content, syntax->d_end_of_something) == 0)){
+                                                            break;
+                                                            j--;
+                                                    }
+                                                }
+
+                                                if((parentheses != 0) & (parentheses2 != 0)){
+                                                    printf("\nline %d !!!error:  parentheses not matched", token->number[i].line);
+                                                }
+
+                                                if(strcmp(verify_type_expresion(token,syntax, ssstart, dddend), "int_expresion") == 0){
+                                                    token->number[i].string_capacity = calculate_int_expresion(token, syntax, i, j);;
+                                                    i = j;
+                                                    token->number[i].value_string = create_var_string(token->number[i].string_capacity);
+                                                    token->number[i].type = "var_string";
+                                                }else{
+                                                    printf("\nline %d !!!error:  invalid string capacity", token->number[i].line);
+                                                }
+
+                                    }else{
+                                        printf("\nline %d !!!error:  invalid name operator", token->number[i].line);
+                                    }
+
+                                    //if(verify)
+                                    //    printf("\nline %d !!!error:  invalid name operator", token->number[i].line);
+                                    //
+                                }
+
                             }
                         }
+
+        }else if(strcmp(token->number[i].content, syntax->d_while_begin) == 0){
+
+                        i++;
+                        if(strcmp(token->number[i].content, syntax->d_must_have_too) == 0){
+
+                                                int j;
+                                                int parentheses = 0;
+                                                int parentheses2 = 0;
+                                                int ssstart = 0;
+                                                int dddend = 0;
+                                                for(j = i; j <= d_end; j++){
+                                                    if(strcmp(token->number[j].content, "[") == 0) parentheses2++;
+                                                    if(strcmp(token->number[j].content, "]") == 0) parentheses2--;
+                                                    if(strcmp(token->number[j].content, "(") == 0) {
+                                                            parentheses++;
+                                                            ssstart = j + 1;
+                                                    }
+                                                    if(strcmp(token->number[j].content, ")") == 0) {
+                                                            parentheses--;
+                                                            dddend = j - 1;
+                                                    }
+                                                    if((parentheses == 0) & (parentheses2 == 0) & ((strcmp(token->number[j].content, syntax->d_while_start) == 0) || (strcmp(token->number[j].content, syntax->d_end_of_something) == 0))){
+                                                            break;
+                                                            j--;
+                                                    }
+                                                }
+
+                                                if((parentheses != 0) & (parentheses2 != 0)){
+                                                    printf("\nline %d !!!error:  parentheses not matched", token->number[i].line);
+                                                }
+
+                                                if(verify_type_expresion(token,syntax, ssstart, dddend) == "bool_expresion"){
+
+                                                                i = j + 2;
+                                                                    if(strcmp(token->number[i].content, syntax->d_must_have_too) == 0){
+                                                                                    for(j = i; j <= d_end; i++){
+                                                                                            if(strcmp(token->number[j].content, syntax->d_ignore) != 0){
+                                                                                                    if(strcmp(token->number[j].content, syntax->d_begin_of_program) == 0){
+                                                                                                            j++;
+
+                                                                                                                for(int n = j; n <= d_end; n++){
+                                                                                                                        if(strcmp(token->number[n].content, syntax->d_end_of_program) == 0){
+                                                                                                                            n--;
+                                                                                                                            while (calculate_bool_expresion(token,syntax, ssstart, dddend)){
+                                                                                                                                program(token, syntax, j, n);
+                                                                                                                            }
+
+                                                                                                                            j = n++;
+                                                                                                                        }
+                                                                                                                }
+
+
+                                                                                                    }else{
+                                                                                                            j++;
+
+                                                                                                                for(int n = j; n <= d_end; n++){
+                                                                                                                        if(strcmp(token->number[n].content, syntax->d_end_of_something) == 0){
+                                                                                                                            n--;
+                                                                                                                            while (calculate_bool_expresion(token, syntax, ssstart, dddend)){
+                                                                                                                                program(token, syntax, j, n);
+                                                                                                                            }
+                                                                                                                            j = n;
+                                                                                                                        }
+                                                                                                                }
+                                                                                                    }
+
+                                                                                                        //if(verify)
+                                                                                                        //    printf("\nline %d !!!error:  invalid name operator", token->number[i].line);
+                                                                                                        //
+                                                                                            }
+                                                                                    }
+                                                                                    i = j;
+                                                                    }
+
+                                                }else{
+                                                    printf("\nline %d !!!error:  invalid while operation", token->number[i].line);
+                                                }
+
+                        }
+        }else if(strcmp(token->number[i].content, syntax->d_if) == 0){
+                        i++;
+                        if(strcmp(token->number[i].content, syntax->d_must_have_too) == 0){
+
+                                                int j;
+                                                int parentheses = 0;
+                                                int parentheses2 = 0;
+                                                int ssstart = 0;
+                                                int dddend = 0;
+                                                bool verify = true;
+                                                for(j = i; j <= d_end; j++){
+                                                    if(strcmp(token->number[j].content, "[") == 0) parentheses2++;
+                                                    if(strcmp(token->number[j].content, "]") == 0) parentheses2--;
+                                                    if(strcmp(token->number[j].content, "(") == 0) {
+                                                            parentheses++;
+                                                            ssstart = j + 1;
+                                                    }
+                                                    if(strcmp(token->number[j].content, ")") == 0) {
+                                                            parentheses--;
+                                                            dddend = j - 1;
+
+                                                    }
+                                                    if((parentheses == 0) & (parentheses2 == 0) & ((strcmp(token->number[j].content, syntax->d_then) == 0) || (strcmp(token->number[j].content, syntax->d_end_of_something) == 0))){
+                                                            break;
+                                                            j--;
+                                                    }
+                                                }
+
+                                                if((parentheses != 0) & (parentheses2 != 0)){
+                                                    printf("\nline %d !!!error:  parentheses not matched", token->number[i].line);
+                                                }
+
+                                                if(verify_type_expresion(token,syntax, ssstart, dddend) == "bool_expresion"){
+
+                                                                i = j + 2;
+                                                                    if(strcmp(token->number[j].content, syntax->d_must_have_too) == 0){
+                                                                                    for(j = i; j <= d_end; i++){
+                                                                                            if(strcmp(token->number[j].content, syntax->d_ignore) != 0){
+                                                                                                    if(verify){
+                                                                                                            if(strcmp(token->number[j].content, syntax->d_begin_of_program) == 0){
+                                                                                                                    j++;
+
+                                                                                                                        for(int n = j; n <= d_end; n++){
+                                                                                                                                if(strcmp(token->number[n].content, syntax->d_end_of_program) == 0){
+                                                                                                                                    n--;
+                                                                                                                                    if (calculate_bool_expresion(token,syntax, ssstart, dddend)){
+                                                                                                                                        program(token, syntax, j, n);
+                                                                                                                                    }else{
+                                                                                                                                        verify = false;
+                                                                                                                                    }
+
+
+                                                                                                                                    j = n++;
+
+                                                                                                                                }
+                                                                                                                        }
+
+
+                                                                                                            }else{
+                                                                                                                    j++;
+
+                                                                                                                        for(int n = j; n <= d_end; n++){
+                                                                                                                                if((strcmp(token->number[n].content, syntax->d_end_of_something) == 0) || (strcmp(token->number[n].content, syntax->d_else) == 0)){
+                                                                                                                                    n--;
+                                                                                                                                    if (calculate_bool_expresion(token, syntax, ssstart, dddend)){
+                                                                                                                                        program(token, syntax, j, n);
+                                                                                                                                    }else{
+                                                                                                                                        verify = false;
+                                                                                                                                    }
+                                                                                                                                    j = n;
+
+                                                                                                                                }
+                                                                                                                        }
+                                                                                                            }
+                                                                                                    }else{
+                                                                                                            if(strcmp(token->number[j].content, syntax->d_else) == 0){
+                                                                                                                    if(strcmp(token->number[j].content, syntax->d_begin_of_program) == 0){
+                                                                                                                            j++;
+
+                                                                                                                                for(int n = j; n <= d_end; n++){
+                                                                                                                                        if(strcmp(token->number[n].content, syntax->d_end_of_program) == 0){
+                                                                                                                                            n--;
+                                                                                                                                            if (!(calculate_bool_expresion(token,syntax, ssstart, dddend))){
+                                                                                                                                                program(token, syntax, j, n);
+                                                                                                                                            }
+
+                                                                                                                                            j = n++;
+
+                                                                                                                                        }
+                                                                                                                                }
+
+
+                                                                                                                    }else{
+                                                                                                                            j++;
+
+                                                                                                                                for(int n = j; n <= d_end; n++){
+                                                                                                                                        if(strcmp(token->number[n].content, syntax->d_end_of_something) == 0){
+                                                                                                                                            n--;
+                                                                                                                                            if (!(calculate_bool_expresion(token, syntax, ssstart, dddend))){
+                                                                                                                                                program(token, syntax, j, n);
+                                                                                                                                            }
+                                                                                                                                            j = n;
+
+                                                                                                                                        }
+                                                                                                                                }
+                                                                                                                    }
+                                                                                                            }
+
+
+
+
+
+
+                                                                                                    }
+
+
+
+
+                                                                                                        //if(verify)
+                                                                                                        //    printf("\nline %d !!!error:  invalid name operator", token->number[i].line);
+                                                                                                        //
+                                                                                            }
+                                                                                    }
+                                                                                    i = j;
+                                                                    }
+
+                                                }else{
+                                                    printf("\nline %d !!!error:  invalid while operation", token->number[i].line);
+                                                }
+
+                        }
+
+
+
+
+
+
+        }else if(strcmp(token->number[i].content, syntax->d_print) == 0){
+                        int j = i++;
+                                int ssstart = 0;
+                                int dddend = 0;
+                        for(j; j <= d_end; j++){
+                            if(strcmp(token->number[j].content, syntax->d_ignore) != 0){
+
+                                int parantheses = 0;
+                                int comas1 = 0;
+                                int comas2 = 0;
+                                bool verify = false;
+
+
+                                if((ssstart == 0) & (dddend == 0) & (comas2 == 0) & (comas1 == 0) & (strcmp(token->number[j].content, "(") == 0)) {
+                                        ssstart = j + 1;
+                                }
+                                if((ssstart != 0) & (dddend == 0) & (comas2 == 0) & (comas1 == 0) & (strcmp(token->number[j].content, "\"") == 0)){
+                                        comas1 = 1;
+                                }
+                                if((ssstart != 0) & (dddend == 0) & (strcmp(token->number[j].content, ")") == 0)) {
+                                        dddend = j - 1;
+                                }
+                                if((verify || ((ssstart != 0) & (dddend == 0) & (comas2 == 0) & (comas1 != 0))) & (strcmp(token->number[j].content, "\"") == 0)){
+                                        comas2 = 1;
+                                }
+                                if((ssstart != 0) & (dddend == 0) & (strcmp(token->number[j].content, ",") == 0)){
+                                    comas1 = 0;
+                                    comas2 = 0;
+                                    j++;
+                                    verify = true;
+                                }
+                                if(strcmp(token->number[j].content, syntax->d_end_of_something) == 0){
+                                        if((ssstart != 0) & (dddend != 0)){
+                                                break;
+                                                j--;
+                                        }else{
+                                            printf("\nline %d !!!error:  invalid print output", token->number[i].line);
+                                        }
+                            }
+
+                            }
+                        }
+                        printf("\n");
+                        print_this_pls(token, syntax, ssstart, dddend);
+
+        }else if(strcmp(token->number[i].content, syntax->d_end_of_something) == 0){
+            //printf("\ndddd");
+
+                        int j = i + 1;
+                        for(j; j <= d_end; j++){
+                            if((strcmp(token->number[j].content, syntax->d_end_of_something) != 0) & (strcmp(token->number[j].content, syntax->d_ignore) != 0)){
+                            if(verify_if_valid_var(token, syntax, i)){
+                                if(verify_if_var_int(token, j)){
+                                            j++;
+                                            int var = j - 1;
+                                            for(j; j <= d_end; j++){
+                                                if((strcmp(token->number[j].content, syntax->d_end_of_something) != 0) & (strcmp(token->number[j].content, syntax->d_ignore) != 0)){
+                                                   if(strcmp(token->number[j].content, syntax->d_atribution) == 0){
+                                                        j++;
+                                                        for(int n = j; n <= d_end; n++){
+                                                            if(strcmp(token->number[n].content, syntax->d_end_of_something) == 0){
+                                                                    n--;
+                                                                if(verify_type_expresion(token,syntax, j, n) == "int_expresion"){
+                                                                    insert_int_in_var(token, syntax, var, calculate_int_expresion(token, syntax, j, n));
+                                                                    i = n++;
+                                                                }
+                                                            }
+                                                        }
+
+                                                   }
+                                                }
+                                            }
+
+
+
+
+
+                                }else if(verify_if_var_float(token, j)){
+
+                                    j++;
+                                            int var = j - 1;
+                                            for(j; j <= d_end; j++){
+                                                if((strcmp(token->number[j].content, syntax->d_end_of_something) != 0) & (strcmp(token->number[j].content, syntax->d_ignore) != 0)){
+                                                   if(strcmp(token->number[j].content, syntax->d_atribution) == 0){
+                                                        j++;
+                                                        for(int n = j; n <= d_end; n++){
+                                                            if(strcmp(token->number[n].content, syntax->d_end_of_something) == 0){
+                                                                    n--;
+                                                                if(verify_type_expresion(token,syntax, j, n) == "float_expresion"){
+
+                                                                    insert_float_in_var(token, syntax, var, calculate_float_expresion(token, syntax, j, n));
+                                                                    i = n++;
+                                                                }
+                                                            }
+                                                        }
+
+                                                   }
+                                                }
+                                            }
+
+                                }else if(verify_if_var_char(token, j)){
+
+                                    j++;
+                                            int var = j - 1;
+                                            for(j; j <= d_end; j++){
+                                                if((strcmp(token->number[j].content, syntax->d_end_of_something) != 0) & (strcmp(token->number[j].content, syntax->d_ignore) != 0)){
+                                                   if(token->number[j].content == syntax->d_atribution){
+                                                        j++;
+                                                        for(int n = j; n <= d_end; n++){
+                                                            if(strcmp(token->number[n].content, syntax->d_end_of_something) == 0){
+                                                                    n--;
+
+                                                                if(verify_type_expresion(token,syntax, j, n) == "char_expresion"){
+                                                                        char *something;
+                                                                        int comas1 = 0;
+                                                                        int comas2 = 0;
+                                                                        bool verify = false;
+
+                                                                    for(int v = n; v <=d_end; v++){
+                                                                        if((comas2 == 0) & (comas1 == 0) & (strcmp(token->number[v].content, "\"") == 0)){
+                                                                                comas1 = 1;
+                                                                        }
+                                                                        if((comas2 == 0) & (comas1 != 0) & (strcmp(token->number[v].content, "\"") != 0)){
+                                                                                something = token->number[v].content;
+                                                                        }
+                                                                        if((comas2 == 0) & (comas1 != 0) & (strcmp(token->number[v].content, "\"") == 0)){
+                                                                                comas2 = 1;
+                                                                        }
+                                                                        if((comas1 != 0) & (comas2 != 0) & (strcmp(token->number[v].content, syntax->d_end_of_something) == 0)){
+                                                                                break;
+                                                                                v--;
+                                                                        }else{
+                                                                            printf("\nline %d !!!error:  invalid character", token->number[i].line);
+                                                                        }
+                                                                    }
+
+                                                                    insert_char_in_var(token, syntax, var, something[0]);
+                                                                    i = n++;
+                                                                }
+                                                            }
+                                                        }
+
+                                                   }
+                                                }
+                                            }
+
+                                }else if(verify_if_var_string(token, j)){
+
+                                    j++;
+                                    bool place = false;
+                                    int where;
+                                    bool if_char = false;
+
+                                            int var = j - 1;
+                                            for(j; j <= d_end; j++){
+                                                if((strcmp(token->number[j].content, syntax->d_end_of_something) != 0) & (strcmp(token->number[j].content, syntax->d_end_of_something) != 0)){
+
+                                                   if(strcmp(token->number[j].content, syntax->d_atribution) == 0){
+                                                        j++;
+                                                        for(int n = j; n <= d_end; n++){
+                                                            if(strcmp(token->number[n].content, syntax->d_end_of_something) == 0){
+                                                                    n--;
+
+                                                                if(verify_type_expresion(token,syntax, j, n) == "string_expresion"){
+                                                                        if(verify_type_expresion(token,syntax, j, n) == "char_expresion"){
+                                                                            if_char = true;
+                                                                        }
+
+                                                                        size_t base_size = 100;
+                                                                        char *something = (char *)malloc(base_size * sizeof(char));
+                                                                        if (something == NULL) {
+                                                                            printf("Memory allocation failed.\n");
+
+                                                                        }
+
+                                                                        size_t tsize = 0;
+                                                                        char ch;
+
+                                                                        int comas1 = 0;
+                                                                        int comas2 = 0;
+                                                                        bool verify = false;
+
+                                                                    for(int v = n; v <=d_end; v++){
+                                                                        if((comas2 == 0) & (comas1 == 0) & (strcmp(token->number[v].content, "\"") == 0)){
+                                                                                comas1 = 1;
+                                                                        }
+                                                                        if((comas2 == 0) & (comas1 != 0) & (strcmp(token->number[v].content, "\"") != 0)){
+
+
+                                                                                        //something[tsize] = ch;
+
+
+                                                                                        if (token->number[v].capacity >= base_size - tsize - 1) {
+                                                                                            base_size = base_size + 100 + token->number[v].capacity;
+                                                                                            char *new_buffer = (char *)realloc(something, base_size * sizeof(char));
+
+                                                                                            if (new_buffer == NULL) {
+                                                                                                printf("Memory reallocation failed.\n");
+                                                                                                free(something);
+
+                                                                                            }
+
+                                                                                            something = new_buffer;
+                                                                                        }
+                                                                                        tsize = tsize + token->number[v].capacity;
+                                                                                        strcat(something, token->number[v].content);
+
+                                                                        }
+                                                                        if((comas2 == 0) & (comas1 != 0) & (token->number[v].content == "\"")){
+                                                                                comas2 = 1;
+                                                                        }
+                                                                        if((comas1 != 0) & (comas2 != 0) & (token->number[v].content == syntax->d_end_of_something)){
+                                                                                something[tsize] = '\0';
+                                                                                break;
+                                                                                v--;
+                                                                        }else{
+                                                                            printf("\nline %d !!!error:  invalid string", token->number[i].line);
+                                                                        }
+                                                                    }
+                                                                    if(place){
+                                                                            if(if_char){
+                                                                                insert_one_char_string_in_var(token, syntax, var, something[0],where);
+                                                                                i = n++;
+                                                                            }else{
+                                                                                printf("\nline %d !!!error:  invalid character", token->number[i].line);
+                                                                            }
+
+
+                                                                    }else{
+                                                                        insert_string_in_var(token, syntax, var, something);
+                                                                        i = n++;
+                                                                    }
+
+                                                                }
+                                                            }
+                                                        }
+
+                                                   }else if(strcmp(token->number[j].content, "[") == 0){
+
+                                                            j--;
+                                                            int parantheses = 0;
+                                                            bool verify = false;
+                                                            int ssstart;
+                                                            int dddend;
+
+                                                        for(j; j < d_end; j++){
+                                                            if(strcmp(token->number[j].content, "[") == 0) {
+                                                                    parantheses++;
+                                                                    ssstart = j + 1;
+                                                            }
+                                                            if((strcmp(token->number[j].content, "]") == 0)) {
+                                                                    parantheses--;
+                                                                    ssstart = j - 1;
+                                                            }
+                                                            if(strcmp(token->number[j].content, syntax->d_atribution) == 0){
+                                                                    if(parantheses == 0){
+                                                                        if(verify_if_int_expresion(token, syntax, ssstart, dddend)){
+                                                                            where = calculate_int_expresion(token, syntax, ssstart, dddend);
+                                                                        }else{
+                                                                            printf("\nline %d !!!error:  between parentheses should be integervalue", token->number[i].line);
+                                                                        }
+                                                                        place = true;
+                                                                        break;
+                                                                        j--;
+                                                                    }else{
+                                                                        printf("\nline %d !!!error:  parentheses not matched", token->number[i].line);
+                                                                    }
+                                                            }
+                                                        }
+
+
+
+                                                   }
+                                                }
+                                            }
+
+                                }
+                            }
+                            }
+                        }
+
+        }
+
+
+
+
+
+
+
+    }
+
+
+//printf("\ndddd");
+print_all_tokens_details(token);
+//printf("\ntoken[%d] = %s", 4, token->number[4].type);
+
+}
+
+
+
+///
+int *create_var_int(){
+    int *buffer = (int*) malloc(sizeof(int));
+    if (buffer == NULL) printf("\n      error: Failed memory alocation");
+    return buffer;
+ }
+///
+float *create_var_float(){
+    float *buffer = (float*) malloc(sizeof(float));
+    if (buffer == NULL) printf("\n      error: Failed memory alocation");
+    return buffer;
+}
+///
+char *create_var_char(){
+    char *buffer = (char*) malloc(sizeof(char));
+    if (buffer == NULL) printf("\n      error: Failed memory alocation");
+    return buffer;
+}
+///
+char *create_var_string(size_t capacity){
+    char *buffer = (char*) malloc(capacity * sizeof(char));
+    if (buffer == NULL) printf("\n      error: Failed memory alocation");
+    return buffer;
+}
+///
+
+
+
+///
+bool verify_if_valid_var(Token *token,Syntax *syntax, int nr){
+
+    char *endend = syntax->d_end_of_program;
+    strcat(endend, syntax->d_end_of_end);
+
+    if((strcmp(token->number[nr].content, syntax->d_atribution) != 0)& (strcmp(token->number[nr].content, endend) != 0) & (strcmp(token->number[nr].content, syntax->d_while_start) != 0) & (strcmp(token->number[nr].content, syntax->d_while_begin) != 0) & (strcmp(token->number[nr].content, syntax->d_trunc) != 0) & (strcmp(token->number[nr].content, syntax->d_then) != 0) & (strcmp(token->number[nr].content, syntax->d_string) != 0) & (strcmp(token->number[nr].content, syntax->d_print) != 0) & (strcmp(token->number[nr].content, syntax->d_power) != 0) & (strcmp(token->number[nr].content, syntax->d_integer) != 0) & (strcmp(token->number[nr].content, syntax->d_if) != 0) & (strcmp(token->number[nr].content, syntax->d_float) != 0) & (strcmp(token->number[nr].content, syntax->d_end_of_program) != 0) & (strcmp(token->number[nr].content, syntax->d_end_of_end) != 0) & (strcmp(token->number[nr].content, syntax->d_else) != 0) & (strcmp(token->number[nr].content, syntax->d_char) != 0) & (strcmp(token->number[nr].content, syntax->d_begin_of_program) != 0)){
+        if((strcmp(token->number[nr].content, "<") != 0) & (strcmp(token->number[nr].content, ">") != 0) & (strcmp(token->number[nr].content, "!") != 0) & (strcmp(token->number[nr].content, "?") != 0) & (strcmp(token->number[nr].content, ",") != 0) & (strcmp(token->number[nr].content, "|") != 0) & (strcmp(token->number[nr].content, "@") != 0) & (strcmp(token->number[nr].content, "#") != 0) & (strcmp(token->number[nr].content, "$") != 0) & (strcmp(token->number[nr].content, "%") != 0) & (strcmp(token->number[nr].content, "^") != 0) & (strcmp(token->number[nr].content, "*") != 0) & (strcmp(token->number[nr].content, "(") != 0) & (strcmp(token->number[nr].content, ")") != 0) & (strcmp(token->number[nr].content, "_") != 0) & (strcmp(token->number[nr].content, "-") != 0) & (strcmp(token->number[nr].content, "=") != 0) & (strcmp(token->number[nr].content, "+") != 0)){
+            if((strcmp(token->number[nr].content, "[") != 0) & (strcmp(token->number[nr].content, "]") != 0) & (strcmp(token->number[nr].content, "{") != 0) & (strcmp(token->number[nr].content, "}") != 0) & (strcmp(token->number[nr].content, ";") != 0) & (strcmp(token->number[nr].content, ":") != 0) & (strcmp(token->number[nr].content, "'") != 0) & (strcmp(token->number[nr].content, "\"") != 0) & (strcmp(token->number[nr].content, "\\") != 0) & (strcmp(token->number[nr].content, ",") != 0) & (strcmp(token->number[nr].content, "/") != 0)){
+                if(((token->number[nr].content[0] >= 'a') & (token->number[nr].content[0] <= 'z')) || ((token->number[nr].content[0] >= 'A') & (token->number[nr].content[0] <= 'Z'))){
+                    //printf("\ndddd");
+                    return true;
+                }
+            }
+        }
+    }
+//
+return false;
+}
+///
+void print_this_pls(Token *token, Syntax *syntax, int d_start, int d_end){
+
+    int i = d_start;
+    int until;
+
+    for(until = d_start; until <= d_end; until++){
+        if((strcmp(token->number[i].content, "\"") == 0) || (strcmp(token->number[i].content, ",") == 0)){
+            until--;
+            break;
+        }
+    }
+
+
+    for( i; i <= d_end; i++){
+        if(strcmp(token->number[i].content, syntax->d_ignore) != 0){
+
+            if(strcmp(token->number[i].content, "\"") == 0){
+
+                    size_t base_size = 100;
+                    char *something = (char *)malloc(base_size * sizeof(char));
+                    if (something == NULL) {
+                        printf("Memory allocation failed.\n");
+
+                    }
+
+                    size_t tsize = 0;
+                    char ch;
+
+                    int comas1 = 0;
+                    int comas2 = 0;
+
+                for(int j = i; j <= d_end; j++){
+
+                                int comas1 = 0;
+                                int comas2 = 0;
+                                bool verify = false;
+
+                                if((comas2 == 0) & (comas1 == 0) & (strcmp(token->number[j].content, "\"") == 0)){
+                                        comas1 = 1;
+                                }
+                                if((comas2 == 0) & (comas1 != 0) & (strcmp(token->number[j].content, "\"") != 0)){
+
+
+
+                                    if (token->number[j].capacity >= base_size - tsize - 1) {
+                                        base_size = base_size + 100 + token->number[j].capacity;
+                                        char *new_buffer = (char *)realloc(something, base_size * sizeof(char));
+
+                                        if (new_buffer == NULL) {
+                                            printf("Memory reallocation failed.\n");
+                                            free(something);
+
+                                        }
+
+                                        something = new_buffer;
+                                    }
+                                    tsize = tsize + token->number[j].capacity;
+                                    strcat(something, token->number[j].content);
+
+                                }
+
+
+
+                                if((comas2 == 0) & (comas1 != 0) & (strcmp(token->number[j].content, "\"") == 0)){
+                                        comas2 = 1;
+                                }
+                                if((comas2 != 0) & (comas1 != 0) & (strcmp(token->number[j].content, ",") == 0)){
+                                    comas1 = 0;
+                                    comas2 = 0;
+                                    i = j--;
+                                }
+                }
+                printf("%s",something);
+
+            }else if(strcmp(token->number[i].content, ",") == 0){
+                i++;
+                print_this_pls(token, syntax, i, d_end);
+            }else if(verify_type_expresion(token,syntax, i, until) == "int_expresion"){
+                printf("\ndddd");
+                printf("%d", calculate_int_expresion(token, syntax, i, until));
+                i = until;
+
+            }else if(verify_type_expresion(token,syntax, i, until) == "float_expresion"){
+                printf("%d", calculate_float_expresion(token, syntax, i, until));
+                i = until;
+
+            }else if(verify_type_expresion(token,syntax, i, until) == "bool_expresion"){
+                printf("%d", calculate_bool_expresion(token, syntax, i, until));
+                i = until;
+
+            }else if(verify_if_valid_var(token, syntax, i)){
+                if(verify_if_var_char(token, i)){
+                    printf("%c", extract_char_from_var(token, syntax, i));
+
+                }else if(verify_if_var_string(token, i)){
+                    printf("%s", extract_string_from_var(token, syntax, i));
+
+                }
+            }
+
+        }
+    }
+
+
+
+
+}
+
+
+
+///
+bool verify_if_var_int(Token *token, int nr){
+//printf("\ndddd");
+        for(int i = 0; i <= nr; i++){
+                if(strcmp(token->number[i].type, "int") == 0){
+                   for(int j = i; j <= nr; j++){
+                            if(strcmp(token->number[i].type, "var_int") == 0){
+                                    if(token->number[i].content == token->number[nr].content){
+                                        printf("\ndddd");
+                                        return true;
+                                    }
+                            }
                    }
                 }
         }
-    printf("\n      !!!error:  %s first time used", token->number[nr].content);
-
-return 0;
+return false;
 }
-
-
-
 ///
-void insert_float_in_var(Token *token, Syntax *syntax, int nr, float *value){
+bool verify_if_var_float(Token *token, int nr){
 
-        for(int i = 0; i < nr; i++){
+    for(int i = 0; i <= nr; i++){
                 if(token->number[i].type == "float"){
-                   for(int j = i; j < nr; j++){
-                        if(token->number[i].type != syntax->d_ignore){
+                   for(int j = i; j <= nr; j++){
+
                             if(token->number[i].type == "var_float"){
                                     if(token->number[i].content == token->number[nr].content){
-                                        token->number[i].value_float = value;
+                                        return true;
+                                        break;
+                                    }
+                            }
+
+                   }
+                }
+        }
+return false;
+}
+///
+bool verify_if_var_char(Token *token, int nr){
+    for(int i = 0; i <= nr; i++){
+                if(token->number[i].type == "char"){
+                   for(int j = i; j <= nr; j++){
+
+                            if(token->number[i].type == "var_char"){
+                                    if(token->number[i].content == token->number[nr].content){
+                                        return true;
                                         break;
                                     }
                             }
                         }
-                   }
+
                 }
-
         }
-    printf("\n      !!!error:  %s first time used", token->number[nr].content);
-
+return false;
 }
 ///
-float extract_float_from_var(Token *token, Syntax *syntax, int nr){
+bool verify_if_var_string(Token *token, int nr){
 
-        for(int i = 0; i < nr; i++){
-                if(token->number[i].type == "float"){
+    for(int i = 0; i <= nr; i++){
+                if(token->number[i].type == "string"){
                    for(int j = i; j < nr; j++){
-                        if(token->number[i].type != syntax->d_ignore){
-                            if(token->number[i].type == "var_float"){
+
+                            if(token->number[i].type == "var_string"){
                                     if(token->number[i].content == token->number[nr].content){
-                                        return *token->number[i].value_float;
+                                        return true;
                                         break;
                                     }
                             }
-                        }
+
                    }
                 }
         }
-    printf("\n      !!!error:  %s first time used", token->number[nr].content);
-
-return 0;
+return false;
 }
 
 
 
 
+
 ///
-bool extract_bool_from_var(Token *token, Syntax *syntax, int nr){
-
-
-
-return true;
+bool verify_if_value_int(Token *token, int nr){
+    if (token->number[nr].content == NULL || *token->number[nr].content == '\0') {
+        return false;
+    }
+    int i;
+    while (token->number[nr].content[i] != '\0') {
+        if (!isdigit(token->number[nr].content[i]) && token->number[nr].content[i] != '-' && token->number[nr].content[i] != '+') {
+            return false;
+        }
+        i++;
+    }
+    return true;
+}
+///
+bool verify_if_value_float(Token *token, int nr){
+    int len;
+    float floatu = 0.0;
+    if (sscanf(token->number[nr].content, "%f %len", &floatu, &len) == 1 && len == (int)strlen(token->number[nr].content))
+        return true;
+    else return false;
+}
+///
+bool verify_if_value_char(Token *token, int nr){
+    if(strlen(token->number[nr].content) == 1 ) return true;
+    else return false;
+}
+///
+bool verify_if_value_string(Token *token, int nr){
 }
 
 
 
 ///
-void insert_char_in_var(Token *token, Syntax *syntax, int nr, char *value){
+char *verify_type_expresion(Token *token,Syntax *syntax, int d_start, int d_end){
 
-        for(int i = 0; i < nr; i++){
-                if(token->number[i].type == "char"){
-                   for(int j = i; j < nr; j++){
-                        if(token->number[i].type != syntax->d_ignore){
-                            if(token->number[i].type == "var_char"){
-                                    if(token->number[i].content == token->number[nr].content){
-                                        token->number[i].value_char = value;
-                                        break;
+
+    char *int_expresion = "int_expresion";
+    char *float_expresion = "float_expresion";
+    char *bool_expresion = "bool_expresion";
+    char *char_expresion = "char";
+    char *string_expresion = "string";
+
+    char *var_int = "var_int";
+    char *var_float = "var_float";
+    char *var_char = "var_char";
+    char *var_string = "var_string";
+
+    char *value_int = "value_int";
+    char *value_float = "value_float";
+    char *value_char = "value_char";
+    char *value_string = "value_string";
+
+    for(int i = d_start; i <= d_end; i++){
+
+        if(strcmp(token->number[i].content, "+") == 0){
+            token->number[i].type = "+";
+
+        }else if(strcmp(token->number[i].content, "-") == 0){
+            token->number[i].type = "-";
+
+        }else if(strcmp(token->number[i].content, "*") == 0){
+            token->number[i].type = "*";
+
+        }else if(strcmp(token->number[i].content, "\"") == 0){
+            token->number[i].type = "\"";
+
+        }else if(strcmp(token->number[i].content, "%") == 0){
+            token->number[i].type = "%";
+
+        }else if(strcmp(token->number[i].content, "!") == 0){
+            token->number[i].type = "!";
+
+        }else if(strcmp(token->number[i].content, "&") == 0){
+            token->number[i].type = "&";
+
+        }else if(strcmp(token->number[i].content, "(") == 0){
+            token->number[i].type = "(";
+
+        }else if(strcmp(token->number[i].content, ")") == 0){
+            token->number[i].type = ")";
+
+        }else if(strcmp(token->number[i].content, "=") == 0){
+            token->number[i].type = "=";
+
+        }else if(strcmp(token->number[i].content, "[") == 0){
+            token->number[i].type = "[";
+
+        }else if(strcmp(token->number[i].content, "]") == 0){
+            token->number[i].type = "]";
+
+        }else if(strcmp(token->number[i].content, "|") == 0){
+            token->number[i].type = "|";
+
+        }else if(strcmp(token->number[i].content, "<") == 0){
+            token->number[i].type = "<";
+
+        }else if(strcmp(token->number[i].content, ">") == 0){
+            token->number[i].type = ">";
+
+        }else if(strcmp(token->number[i].content, "\\") == 0){
+            token->number[i].type = "\\";
+
+        }else if(verify_if_valid_var(token, syntax, i)){
+
+                char *type = verify_type_var(token, i, d_end);
+
+                if(strcmp(type, var_int) == 0){
+                    token->number[i].type = var_int;
+
+                }else if(strcmp(type, var_float) == 0){
+                    token->number[i].type = var_float;
+
+                }else if(strcmp(type, var_char) == 0){
+                    token->number[i].type = var_char;
+
+                }else if(strcmp(type, var_string) == 0){
+                    token->number[i].type = var_string;
+
+                }
+
+        }else if(strcmp(token->number[i].content, syntax->d_power) == 0){
+            token->number[i].type = syntax->d_power;
+
+        }else if(strcmp(token->number[i].content, syntax->d_trunc) == 0){
+            token->number[i].type = syntax->d_trunc;
+
+        }else if(verify_if_value_int(token, i)){
+            token->number[i].type = value_int;
+
+        }else if(verify_if_value_float(token, i)){
+            token->number[i].type = value_float;
+
+        }else if(verify_if_var_char){
+            token->number[i].type = value_char;
+        }else{
+            token->number[i].type = value_string;
+        }
+
+
+
+    }printf("\nnnnnn");
+
+
+    if(verify_if_int_expresion(token, syntax, d_start, d_end)){
+        return int_expresion;
+    }else if(verify_if_float_expresion(token, syntax, d_start, d_end)){
+        return float_expresion;
+    }else if(verify_if_bool_expresion(token, syntax, d_start, d_end)){
+        return bool_expresion;
+    }else if(verify_if_char(token, syntax, d_start, d_end)){
+        return char_expresion;
+    }else if(verify_if_string(token, syntax, d_start, d_end)){
+        return string_expresion;
+    }
+}
+///
+char *verify_type_var(Token *token, int d_start, int d_end){
+
+    for(int i = d_start; i <= d_end ; i++){
+                if(token->number[i].type == "int"){
+                   for(int j = i; j < d_end; j++){
+                            if(token->number[j].type == "var_int"){
+                                    if(token->number[j].content == token->number[d_end].content){
+                                        return "var_int";
                                     }
                             }
-                        }
                    }
-                }
-
-        }
-    printf("\n      !!!error:  %s first time used", token->number[nr].content);
-
-
-
-}
-///
-char extract_char_from_var(Token *token, Syntax *syntax, int nr){
-
-        for(int i = 0; i < nr; i++){
-                if(token->number[i].type == "char"){
-                   for(int j = i; j < nr; j++){
-                        if(token->number[i].type != syntax->d_ignore){
-                            if(token->number[i].type == "var_char"){
-                                    if(token->number[i].content == token->number[nr].content){
-                                        return *token->number[i].value_char;
-                                        break;
+                }else if(token->number[i].type == "float"){
+                   for(int j = i; j < d_end; j++){
+                            if(token->number[j].type == "var_float"){
+                                    if(token->number[j].content == token->number[d_end].content){
+                                        return "var_float";
                                     }
                             }
-                        }
                    }
-                }
-
-        }
-    printf("\n      !!!error:  %s first time used", token->number[nr].content);
-
-return '\0';
-}
-
-
-
-
-///
-void insert_string_in_var(Token *token, Syntax *syntax, int nr, char value[]){
-
-    size_t len = strlen(value);
-
-            for(int i = 0; i < nr; i++){
-                if(token->number[i].type == "char"){
-                   for(int j = i; j < nr; j++){
-                        if(token->number[i].type != syntax->d_ignore){
-                            if(token->number[i].type == "var_char"){
-                                    if(token->number[i].content == token->number[nr].content){
-                                        if(*token->number[i].string_capacity >= len){
-                                            token->number[i].value_char = value;
-                                            break;
-                                        }else{
-                                            printf("\n      !!!error:  the string inserted is to big for %s", token->number[nr].content);
-                                        }
+                }else if(token->number[i].type == "char"){
+                   for(int j = i; j < d_end; j++){
+                            if(token->number[j].type == "var_char"){
+                                    if(token->number[j].content == token->number[d_end].content){
+                                        return "var_char";
                                     }
                             }
-                        }
                    }
-                }
-
-        }
-    printf("\n      !!!error:  %s first time used", token->number[nr].content);
-
-}
-///
-char *extract_string_from_var(Token *token, Syntax *syntax, int nr){
-
-            for(int i = 0; i < nr; i++){
-                if(token->number[i].type == "char"){
-                   for(int j = i; j < nr; j++){
-                        if(token->number[i].type != syntax->d_ignore){
-                            if(token->number[i].type == "var_char"){
-                                    if(token->number[i].content == token->number[nr].content){
-                                            return token->number[i].value_char;
-                                            break;
-
+                }else if(token->number[i].type == "string"){
+                   for(int j = i; j < d_end; j++){
+                            if(token->number[j].type == "var_string"){
+                                    if(token->number[j].content == token->number[d_end].content){
+                                        return "var_string";
                                     }
                             }
-                        }
                    }
                 }
-
         }
-    printf("\n      !!!error:  %s first time used", token->number[nr].content);
 
 }
-///
-void insert_one_char_string_in_var(Token *token, Syntax *syntax, int nr, char value, int where){
 
-            for(int i = 0; i < nr; i++){
-                if(token->number[i].type == "char"){
-                   for(int j = i; j < nr; j++){
-                        if(token->number[i].type != syntax->d_ignore){
-                            if(token->number[i].type == "var_char"){
-                                    if(token->number[i].content == token->number[nr].content){
-                                        if(*token->number[i].string_capacity >= where){
-                                            token->number[i].value_char[where] = value;
-                                            break;
-                                        }else{
-                                            printf("\n      !!!error:  the char is placed out of %s", token->number[nr].content);
-                                        }
-                                    }
-                            }
-                        }
-                   }
-                }
 
-        }
-    printf("\n      !!!error:  %s first time used", token->number[nr].content);
 
-}
-///
-char *extract_one_char_string_from_var(Token *token, Syntax *syntax, int nr, int where){
 
-            for(int i = 0; i < nr; i++){
-                if(token->number[i].type == "char"){
-                   for(int j = i; j < nr; j++){
-                        if(token->number[i].type != syntax->d_ignore){
-                            if(token->number[i].type == "var_char"){
-                                    if(token->number[i].content == token->number[nr].content){
-                                            if(*token->number[i].string_capacity >= where){
-                                            token->number[i].value_char[where];
-                                            break;
-                                        }else{
-                                            printf("\n      !!!error:  the char is out of %s", token->number[nr].content);
-                                        }
 
-                                    }
-                            }
-                        }
-                   }
-                }
 
-        }
-    printf("\n      !!!error:  %s first time used", token->number[nr].content);
 
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

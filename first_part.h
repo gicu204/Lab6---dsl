@@ -18,7 +18,7 @@ typedef struct
     char *value_char;
     char *value_string;
 
-    size_t *string_capacity;
+    size_t string_capacity;
 
     int capacity;
     int line;
@@ -309,7 +309,7 @@ char *read_cod_in_from_file(Syntax *syntax){
 void destroy_everything(Token *token, Syntax *syntax, char *cod){
 
       free(token->number->content);
-      free(token->number->type);
+      //free(token->number->type);
       //free(token->number->capacity);
       free(token->number->expresion);
       //free(token->number->line);
@@ -393,9 +393,9 @@ void *insert_character(Token *token, int number, char ch){
 
 ///
 int count_tokens(char *cod, size_t cod_size){
-    int tokens;
+    int tokens = 0;
     for(int i = 0; i < cod_size; i++){
-        if((cod[i] == '\n') || (cod[i] == ',') || (cod[i] == '!') || (cod[i] == '|') || (cod[i] == '"') || (cod[i] == '[') || (cod[i] == ']') || (cod[i] == '>') || (cod[i] == '<') || (cod[i] == ' ') || (cod[i] == '%') || (cod[i] == '/') || (cod[i] == '*') || (cod[i] == '+') || (cod[i] == '(') || (cod[i] == ')') || (cod[i] == '-')|| (cod[i] == '=') || (cod[i] == '^')) tokens = tokens + 2;
+        if((cod[i] == '\n') || (cod[i] == ',') || (cod[i] == '!') || (cod[i] == '|') || (cod[i] == '"') || (cod[i] == '[') || (cod[i] == ']') || (cod[i] == '>') || (cod[i] == '<') || (cod[i] == ' ') || (cod[i] == '%') || (cod[i] == '/') || (cod[i] == '*') || (cod[i] == '+') || (cod[i] == '(') || (cod[i] == ')') || (cod[i] == '-')|| (cod[i] == '=')) tokens = tokens + 2;
     }
     return tokens;
 }
@@ -439,7 +439,7 @@ Token *tokenization(char *cod, Syntax *syntax, size_t len, int tokens){
         //printf("\ni = %d ; len = %zu", i, len);
         //printf("\n ch = %c",ch);
 
-        if((ch == '\n') || (cod[i] == ',') || (cod[i] == '!') || (cod[i] == '|') || (ch == '"') || (ch == '[') || (ch == ']') || (ch == '>') || (ch == '<') || (ch == ' ') || (ch == '%') || (ch == '/') || (ch == '*') || (ch == '+') || (ch == '(') || (ch == ')') || (ch == '-')|| (ch == '=') || (ch == '^')){
+        if((ch == '\n') || (cod[i] == ',') || (cod[i] == '!') || (cod[i] == '|') || (ch == '"') || (ch == '[') || (ch == ']') || (ch == '>') || (ch == '<') || (ch == ' ') || (ch == '%') || (ch == '/') || (ch == '*') || (ch == '+') || (ch == '(') || (ch == ')') || (ch == '-')|| (ch == '=')){
 
             //end of the anterior token
             if(verify == 0){
@@ -533,7 +533,7 @@ Token *tokenization(char *cod, Syntax *syntax, size_t len, int tokens){
 
     token->number[j].content[tsize] = '\0';
     token->number[j].capacity = tsize;
-    j++;
+
     token->nr = j;
 
 
@@ -545,10 +545,26 @@ return token;
 ///
 void print_all_tokens(Token *token){
     printf("\n nr = %d", token->nr);
-    for(int i = 0; i < token->nr; i++){
+    for(int i = 0; i <= token->nr; i++){
      printf("\ntoken[%d] = %s",i ,token->number[i].content);
     }
 }
+
+
+///
+void put_line_to_all_tokens(Token *token){
+int line = 0;
+
+    for(int i = 0; i < token->nr; i++){
+        if(token->number[i].content == "\n"){
+            line++;
+        }
+        token->number[i].line = line;
+
+
+    }
+}
+
 ///
 
 

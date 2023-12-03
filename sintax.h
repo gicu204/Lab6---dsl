@@ -19,7 +19,7 @@ typedef struct
 
     char *d_while_begin;
     char *d_while_start;
-    char *d_break;
+    //char *d_break;
     //char *d_repeat_begin;
     //char *d_repeat_end;
 
