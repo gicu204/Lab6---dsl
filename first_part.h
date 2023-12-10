@@ -345,7 +345,7 @@ void destroy_everything(Token *token, Syntax *syntax, char *cod){
 
       free(token);
       free(cod);
-    printf("\nmemory");
+    //printf("\nmemory");
 }
 
 ///
