@@ -995,7 +995,7 @@ void print_this_pls(Token *token, Syntax *syntax, int d_start, int d_end){
                 i = until;
 
             }else if(verify_type_expresion(token,syntax, i, until) == "float_expresion"){
-                printf("%d", calculate_float_expresion(token, syntax, i, until));
+                printf("%f", calculate_float_expresion(token, syntax, i, until));
                 i = until;
 
             }else if(verify_type_expresion(token,syntax, i, until) == "bool_expresion"){
