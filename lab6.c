@@ -52,11 +52,11 @@ int main(){
     if (token == NULL){destroy_everything(token, syntax, cod); return 2;}
 
     //token = put_line_to_all_tokens(token);
-    print_all_tokens(token);
+    //print_all_tokens(token);
     //printf("\nline %d !!!error:  invalid name operator", token->number[3].line);
 
     program(token, syntax, 0, token->nr, false);
-print_all_tokens_details(token);
+//print_all_tokens_details(token);
 
 
 
