@@ -10,7 +10,7 @@ typedef struct
     char *type;
 
     char *expresion;
-    char *variable;
+    bool *value_in_var;
 
     int *value_int;
     float *value_float;
@@ -18,10 +18,10 @@ typedef struct
     char *value_char;
     char *value_string;
 
-    size_t string_capacity;
+    size_t *string_capacity;
 
-    int capacity;
-    int line;
+    int *capacity;
+    int *line;
 
 }The_box;
 
@@ -308,19 +308,9 @@ char *read_cod_in_from_file(Syntax *syntax){
 ///
 void destroy_everything(Token *token, Syntax *syntax, char *cod){
 
-      free(token->number->content);
-      //free(token->number->type);
-      //free(token->number->capacity);
-      free(token->number->expresion);
-      //free(token->number->line);
-      free(token->number->value_bool);
-      free(token->number->value_float);
-      free(token->number->value_int);
-      free(token->number->variable);
-
       free(syntax->d_integer);
       free(syntax->d_float);
-      free(syntax->d_bool);
+      //free(syntax->d_bool);
       free(syntax->d_char);
       free(syntax->d_string);
       free(syntax->d_end_of_something);
@@ -336,10 +326,26 @@ void destroy_everything(Token *token, Syntax *syntax, char *cod){
       free(syntax->d_else);
       free(syntax->d_print);
 
-      free(syntax);
+    free(syntax);
+
+
+
+    //free(token->number->content);
+        //free(token->number->string_capacity);
+        //free(token->number->content);
+        //free(token->number->type);
+        //free(token->number->capacity);
+        //free(token->number->expresion);
+        //free(token->number->line);
+        //free(token->number->value_bool);printf("\nmemory");
+        //free(token->number->value_float);
+        //free(token->number->value_int);
+        //free(token->number->value_in_var);
+
+
       free(token);
       free(cod);
-
+    printf("\nmemory");
 }
 
 ///
@@ -357,7 +363,7 @@ void *create_a_capacitor(Token *token, int number){
 }
 
 
-///
+/*//
 void *insert_character(Token *token, int number, char ch){
 
 //printf("\ncapacity = %d , number = %d", token->number[number].capacity, number);
@@ -372,8 +378,8 @@ void *insert_character(Token *token, int number, char ch){
         }
         token->number[number].capacity++;
         printf("\n%d",token->number[number].capacity);
-        new_buffer[token->number[number].capacity] = ch;//ch;
-        token->number[number].content = new_buffer;
+        //new_buffer[token->number[number].] = ch;//ch;
+        //token->number[number].content = new_buffer;
     }else{
             char *new_buffer = (char *)realloc(token->number[number].content, (size_t)token->number[number].capacity * sizeof(char));
 
@@ -382,7 +388,7 @@ void *insert_character(Token *token, int number, char ch){
                 free(new_buffer);
                 return NULL;
             }
-        new_buffer[token->number[number].capacity] = ch;//ch;
+        //new_buffer[token->number[number].capacity] = ch;//ch;
         token->number[number].content = new_buffer;
         token->number[number].capacity++;
         //printf("\n\n%s",new_buffer);//token->number[number].content);
@@ -391,7 +397,7 @@ void *insert_character(Token *token, int number, char ch){
      //token->number[number].content[3] = '/0';
 }
 
-///
+*///
 int count_tokens(char *cod, size_t cod_size){
     int tokens = 0;
     for(int i = 0; i < cod_size; i++){
@@ -400,6 +406,7 @@ int count_tokens(char *cod, size_t cod_size){
     return tokens;
 }
 
+///
 
 ///
 Token *tokenization(char *cod, Syntax *syntax, size_t len, int tokens){
@@ -416,7 +423,7 @@ Token *tokenization(char *cod, Syntax *syntax, size_t len, int tokens){
                 return NULL;
             }
             token->nr = 0;
-            token->number[0].capacity = 0;
+            //token->number[0].capacity = 0;
 //allocate memory for the fist token contet
     size_t base_size = 100;
     token->number[0].content = (char *)malloc(base_size * sizeof(char));
@@ -433,108 +440,147 @@ Token *tokenization(char *cod, Syntax *syntax, size_t len, int tokens){
     int i = 0;
     int j = 0;
     int verify = 0;
+    int line = 0;
 
-    for(i = 0; i < len; i++){
-        ch = cod[i];
-        //printf("\ni = %d ; len = %zu", i, len);
-        //printf("\n ch = %c",ch);
+    for (i = 0; i < len; i++) {
+    ch = cod[i];
+    if(cod[i] == '\n') {line++;}
+    if ((ch == '\n') || (cod[i] == ',') || (cod[i] == '!') || (cod[i] == '|') || (ch == '"') || (ch == '[') || (ch == ']') || (ch == '>') || (ch == '<') || (ch == ' ') || (ch == '%') || (ch == '/') || (ch == '*') || (ch == '+') || (ch == '(') || (ch == ')') || (ch == '-') || (ch == '=')) {
 
-        if((ch == '\n') || (cod[i] == ',') || (cod[i] == '!') || (cod[i] == '|') || (ch == '"') || (ch == '[') || (ch == ']') || (ch == '>') || (ch == '<') || (ch == ' ') || (ch == '%') || (ch == '/') || (ch == '*') || (ch == '+') || (ch == '(') || (ch == ')') || (ch == '-')|| (ch == '=')){
-
-            //end of the anterior token
-            if(verify == 0){
-                token->number[j].content[tsize] = '\0';
-                token->number[j].capacity = tsize;
-                tsize = 0;
-                j++;
-            }
-            ///start a new token
-                    if(j == tokens - 1){
-                        tokens = tokens + 10;
-                        The_box *box_buffer = realloc(token->number, tokens * sizeof(The_box));
-                                //printf("\nbuffer[%d] = %s",0 ,box_buffer[0].content);
-                        if (box_buffer == NULL) {
-                            printf("Memory reallocation failed.\n");
-                            free(token);
-                            return NULL;}
-                                //printf("\ntoken[%d] = %s",0 ,token->number[0].content);
-                        token->number = box_buffer;
-                    }
-            ///allocate memory for the token with \n
-            //create_a_box(token, 10);
-            //
-            char *content_buffer = (char *)malloc(base_size * sizeof(char));
-                if (content_buffer == NULL) {
-                    printf("Memory allocation failed.\n");
-                    return NULL;
-                }
-            token->number[j].content = content_buffer;
-            token->number[j].capacity = 0;
-            //we introduce \n
-            token->number[j].content[tsize] = ch;//printf("\nddddd");
-            tsize++;
+        if (verify == 0) {
+            // End the current token
             token->number[j].content[tsize] = '\0';
-            //printf("\n dddd = %s", token->number[j].content);
-            token->number[j].capacity = tsize;
-            j++;
-            //start another token
-                    if(j == tokens - 1){
-                        tokens = tokens + 10;
-                        The_box *box_buffer = realloc(token->number, tokens * sizeof(The_box));
-                                //printf("\nbuffer[%d] = %s",0 ,box_buffer[0].content);
-                        if (box_buffer == NULL) {
-                            printf("Memory reallocation failed.\n");
-                            free(token);
-                            return NULL;}
-                                //printf("\ntoken[%d] = %s",0 ,token->number[0].content);
-                        token->number = box_buffer;
-                    }
-            token->number[j].capacity = 0;
-            //allocate memory for another content token
-            char *content_buffer2 = (char *)malloc(base_size * sizeof(char));
-                if (content_buffer2 == NULL) {
-                    printf("Memory allocation failed.\n");
-                    return NULL;
-                }
-            token->number[j].content = content_buffer2;
-            token->number[j].capacity = 0;
-
-            tsize = 0;
-            bsize = base_size;
-            //i++;
-            //ch = cod[i];
-            verify++;
-
-        }else{
-
-            //insert one character in the content
-            token->number[j].content[tsize] = ch;
-            tsize++;
-
-
-            if (tsize == base_size - 1) {
-                bsize = bsize * 2;
-                char *new_buffer = (char *)realloc(token->number[j].content, bsize * sizeof(char));
-            //verify if there is enough space in the capacitor
-                if (new_buffer == NULL) {
-                    printf("Memory reallocation failed.\n");
-                    free(token);
-                    return NULL;
-                }
-
-                token->number[j].content = new_buffer;
+            int *ccapacity = malloc(sizeof(int));
+            if(ccapacity == NULL){
+                printf("Memory allocation failed.\n");
+                return NULL;
             }
-            verify = 0;
+            ccapacity = tsize;
+            token->number[j].capacity = ccapacity;
+            tsize = 0;
+            j++;
         }
 
-        //printf("\n\nch = %s",token->number[j].content);
-        //printf("\ntoken[%d] = %s",0 ,token->number[0].content);
+        // Start a new token with the delimiter as its content
+        if (j == tokens - 1) {
+            tokens = tokens + 10;
+            The_box *box_buffer = realloc(token->number, tokens * sizeof(The_box));
+            if (box_buffer == NULL) {
+                printf("Memory reallocation failed.\n");
+                free(token);
+                return NULL;
+            }
+            token->number = box_buffer;
+        }
+
+        // Allocate memory for the token with the delimiter
+        char *content_buffer = (char *)malloc(base_size * sizeof(char));
+        if (content_buffer == NULL) {
+            printf("Memory allocation failed.\n");
+            return NULL;
+        }
+        char *type = (char *)malloc(30 * sizeof(char));
+        if (type == NULL) {
+            printf("Memory allocation failed.\n");
+            return NULL;
+        }
+        int *cline = malloc(sizeof(int));
+        if(cline == NULL){
+            printf("Memory allocation failed.\n");
+            return NULL;
+        }
+        cline = line;
+        int *ccapacity2 = malloc(sizeof(int));
+            if(ccapacity2 == NULL){
+                printf("Memory allocation failed.\n");
+                return NULL;
+            }
+
+        token->number[j].content = content_buffer;
+        token->number[j].type = type;
+        token->number[j].capacity = 0;
+        token->number[j].content[tsize] = ch;
+        tsize++;
+        ccapacity2 = tsize;
+        token->number[j].content[tsize] = '\0';
+        token->number[j].capacity = ccapacity2;
+        token->number[j].line = cline;
+        j++;
+
+        // Start another token
+        if (j == tokens - 1) {
+            tokens = tokens + 10;
+            The_box *box_buffer = realloc(token->number, tokens * sizeof(The_box));
+            if (box_buffer == NULL) {
+                printf("Memory reallocation failed.\n");
+                free(token);
+                return NULL;
+            }
+            token->number = box_buffer;
+        }
+
+        // Allocate memory for another content token
+        char *content_buffer2 = (char *)malloc(base_size * sizeof(char));
+        if (content_buffer2 == NULL) {
+            printf("Memory allocation failed.\n");
+            return NULL;
+        }
+        char *type2 = (char *)malloc(30 * sizeof(char));
+        if (type2 == NULL) {
+            printf("Memory allocation failed.\n");
+            return NULL;
+        }
+        int *cline2 = malloc(sizeof(int));
+        if(cline2 == NULL){
+            printf("Memory allocation failed.\n");
+            return NULL;
+        }
+        cline2 = line;
+
+        token->number[j].content = content_buffer2;
+        int *ccapacity3 = malloc(sizeof(int));
+            if(ccapacity3 == NULL){
+                printf("Memory allocation failed.\n");
+                return NULL;
+            }
+            ccapacity3 = 0;
+            token->number[j].capacity = ccapacity3;
+        token->number[j].type = type2;
+        token->number[j].line = cline2;
+
+        tsize = 0;
+        bsize = base_size;
+
+        verify++;
+    } else {
+        // Insert one character in the content
+        token->number[j].content[tsize] = ch;
+        tsize++;
+
+        if (tsize == bsize - 1) {
+            bsize = bsize * 2;
+            char *new_buffer = (char *)realloc(token->number[j].content, bsize * sizeof(char));
+            if (new_buffer == NULL) {
+                printf("Memory reallocation failed.\n");
+                free(token);
+                return NULL;
+            }
+            token->number[j].content = new_buffer;
+        }
+        verify = 0;
     }
+}
 
-    token->number[j].content[tsize] = '\0';
-    token->number[j].capacity = tsize;
+token->number[j].content[tsize] = '\0';
+int *ccapacity4 = malloc(sizeof(int));
+            if(ccapacity4 == NULL){
+                printf("Memory allocation failed.\n");
+                return NULL;
+            }
+            ccapacity4 = tsize;
+            token->number[j].capacity = ccapacity4;
+token->nr = j;
 
-    token->nr = j;
 
 
 
@@ -552,18 +598,6 @@ void print_all_tokens(Token *token){
 
 
 ///
-void put_line_to_all_tokens(Token *token){
-int line = 0;
-
-    for(int i = 0; i < token->nr; i++){
-        if(token->number[i].content == "\n"){
-            line++;
-        }
-        token->number[i].line = line;
-
-
-    }
-}
 
 ///
 

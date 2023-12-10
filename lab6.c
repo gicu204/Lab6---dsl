@@ -3,7 +3,6 @@
 
 int main(){
 
-
     Syntax *syntax = create_syntax();
 
         syntax->d_integer = assign_syntax(syntax, "int");
@@ -52,12 +51,12 @@ int main(){
     Token *token = tokenization(cod, syntax, cod_size, tokens);
     if (token == NULL){destroy_everything(token, syntax, cod); return 2;}
 
-    put_line_to_all_tokens(token);
+    //token = put_line_to_all_tokens(token);
     print_all_tokens(token);
     //printf("\nline %d !!!error:  invalid name operator", token->number[3].line);
 
-    program(token, syntax, 0, token->nr);
-
+    program(token, syntax, 0, token->nr, false);
+print_all_tokens_details(token);
 
 
 
@@ -117,5 +116,22 @@ int main(){
 
 return 0;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
