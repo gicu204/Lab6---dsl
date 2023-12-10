@@ -26,7 +26,7 @@ bool verify_if_value_string(Token *token, int nr);
 char *verify_type_expresion(Token *token,Syntax *syntax, int d_start, int d_end);
 char *verify_type_var(Token *token, int d_start, int d_end);
 
-
+void verify_what_is_this(Token *token,Syntax *syntax, int nr);
 ///
 void print_all_tokens_details(Token *token){
 
@@ -84,7 +84,7 @@ for(int i = d_begin; i <= d_end; i++){
 //printf(" %d", i);
 
         if(strcmp(token->number[i].content, syntax->d_integer) == 0){
-            token->number[i].type = "int";
+            token->number[i].type = "int";printf("\ndddd");
                         i++;
 
 
@@ -97,7 +97,7 @@ for(int i = d_begin; i <= d_end; i++){
                             for(j; j <= d_end; j++){
 
                                 if(strcmp(token->number[j].content, syntax->d_end_of_something) == 0){
-                                    if(verify){//printf("\ndddd");
+                                    if(verify){
                                         j--;
                                         break;
                                     }else{
@@ -115,6 +115,7 @@ for(int i = d_begin; i <= d_end; i++){
 
                                         verify = true;
                                     }else{
+                                        verify = false;
                                         printf("\nline %d !!!error:  invalid name operator", token->number[j].line);
                                     }
 
@@ -829,7 +830,9 @@ for(int i = d_begin; i <= d_end; i++){
                             }else break;
                             }
                         }
-
+            i++;
+        }else {
+            verify_what_is_this(token, syntax, i);
         }
 
 
@@ -1312,7 +1315,12 @@ vef = false;
 return vef;
 }
 
+void verify_what_is_this(Token *token,Syntax *syntax, int nr){
 
+
+
+
+}
 
 
 
