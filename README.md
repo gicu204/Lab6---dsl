@@ -28,6 +28,7 @@ print(b)
 while<space>(boolean expresion)do<space><instructions...>
 ```
 while (a<5) do a = a + 1
+
 while (b<5) do begin
 b = b + 1
 print(b)
@@ -37,6 +38,7 @@ end
 if<space>(boolean expresion)then<space><instructions...><space>else<space><instructions...>
 ```
 if (a==5) then print(a) else a = 5
+
 if (b==5) then begin
 print(b)
 end else begin
