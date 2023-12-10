@@ -1,5 +1,7 @@
 # Lab6---dsl
-## Basis of the program
+## Basis of the progra
+begin(newl_line)
+(new_line)_end.
 ```
 begin
 end.
