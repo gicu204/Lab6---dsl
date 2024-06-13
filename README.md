@@ -1,4 +1,4 @@
-# Lab6---dsl
+# Lab6
 ## Basis of the program
 begin<newl_line>
 
